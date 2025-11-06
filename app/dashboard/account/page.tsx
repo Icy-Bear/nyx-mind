@@ -23,6 +23,14 @@ export default function AccountPage() {
     marketing: true,
     security: true,
   });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: "John",
+    lastName: "Doe",
+    email: "john.doe@example.com",
+    username: "johndoe",
+    bio: "Full-stack developer passionate about building great user experiences.",
+  });
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -67,12 +75,24 @@ export default function AccountPage() {
             {/* Profile Card */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Profile Information
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    <CardTitle>Profile Information</CardTitle>
+                  </div>
+                  <Button
+                    variant={isEditingProfile ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                  >
+                    {isEditingProfile ? "Cancel" : "Edit"}
+                  </Button>
+                </div>
                 <CardDescription>
-                  Update your personal information and profile picture
+                  {isEditingProfile 
+                    ? "Update your personal information and profile picture"
+                    : "View your personal information and profile picture"
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -80,10 +100,17 @@ export default function AccountPage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                   <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                     <AvatarImage src="/placeholder-avatar.jpg" alt="Profile" />
-                    <AvatarFallback className="text-lg sm:text-xl">JD</AvatarFallback>
+                    <AvatarFallback className="text-lg sm:text-xl">
+                      {profileData.firstName[0]}{profileData.lastName[0]}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="space-y-3">
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full sm:w-auto"
+                      disabled={!isEditingProfile}
+                    >
                       <Camera className="h-4 w-4 mr-2" />
                       Change Photo
                     </Button>
@@ -95,41 +122,105 @@ export default function AccountPage() {
 
                 <Separator />
 
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="John" />
+                {/* Profile Information */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      {isEditingProfile ? (
+                        <Input 
+                          id="firstName" 
+                          value={profileData.firstName}
+                          onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
+                        />
+                      ) : (
+                        <div className="p-2 border rounded-md bg-muted/30">
+                          {profileData.firstName}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      {isEditingProfile ? (
+                        <Input 
+                          id="lastName" 
+                          value={profileData.lastName}
+                          onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
+                        />
+                      ) : (
+                        <div className="p-2 border rounded-md bg-muted/30">
+                          {profileData.lastName}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Doe" />
+                    <Label htmlFor="email">Email Address</Label>
+                    {isEditingProfile ? (
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                      />
+                    ) : (
+                      <div className="p-2 border rounded-md bg-muted/30 flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        {profileData.email}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    {isEditingProfile ? (
+                      <Input 
+                        id="username" 
+                        value={profileData.username}
+                        onChange={(e) => setProfileData({...profileData, username: e.target.value})}
+                      />
+                    ) : (
+                      <div className="p-2 border rounded-md bg-muted/30 flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        @{profileData.username}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    {isEditingProfile ? (
+                      <Input 
+                        id="bio" 
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                      />
+                    ) : (
+                      <div className="p-2 border rounded-md bg-muted/30 min-h-[40px]">
+                        {profileData.bio || "No bio added yet"}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="john.doe@example.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" placeholder="johndoe" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Input id="bio" placeholder="Tell us about yourself" />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <Button className="w-full sm:w-auto">Save Changes</Button>
-                  <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
-                </div>
+                {isEditingProfile && (
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                    <Button 
+                      className="w-full sm:w-auto"
+                      onClick={() => setIsEditingProfile(false)}
+                    >
+                      Save Changes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full sm:w-auto"
+                      onClick={() => setIsEditingProfile(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
