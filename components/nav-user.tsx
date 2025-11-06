@@ -26,10 +26,11 @@ import {
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
-import { toast } from "sonner";
 import { Badge } from "./ui/badge";
 import { SelectUser } from "@/db/schema";
 import { useUserStore } from "@/store/useUserStore";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export function NavUser({ user }: { user: SelectUser }) {
   const { isMobile } = useSidebar();
@@ -44,6 +45,7 @@ export function NavUser({ user }: { user: SelectUser }) {
         },
         onSuccess: () => {
           clearUser();
+          toast.success("Good bey, See you soon");
           router.push("/auth/login");
         },
       },
@@ -109,10 +111,12 @@ export function NavUser({ user }: { user: SelectUser }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
+              <Link href={"/dashboard/account"}>
+                <DropdownMenuItem>
+                  <IconUserCircle />
+                  Account
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem>
                 <IconCreditCard />
                 Billing
