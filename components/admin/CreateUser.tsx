@@ -4,7 +4,7 @@ import { AddUser } from "../create-user";
 
 export function CreateUser({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-screen">
+    <div className="relative">
       <AddUser />
       {children}
     </div>

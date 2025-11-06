@@ -97,13 +97,14 @@ export function AddUser() {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-20 md:right-10 z-50 shadow-lg"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 shadow-lg hover:scale-105 transition-transform"
         >
-          <UserPlus />
+          <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="hidden sm:inline ml-2">Add User</span>
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogTitle>Create User</DialogTitle>
         <DialogDescription>Create a new user account.</DialogDescription>
 
