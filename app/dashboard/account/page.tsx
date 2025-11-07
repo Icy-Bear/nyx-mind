@@ -4,14 +4,41 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BadgeCheck, Calendar, Camera, Eye, EyeOff, Mail, Shield, Trash2, User, Bell, Activity, Smartphone } from "lucide-react";
+import {
+  BadgeCheck,
+  Calendar,
+  Camera,
+  Eye,
+  EyeOff,
+  Mail,
+  Shield,
+  Trash2,
+  User,
+  Bell,
+  Activity,
+  Smartphone,
+} from "lucide-react";
 
 export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -32,11 +59,16 @@ export default function AccountPage() {
     bio: "Full-stack developer passionate about building great user experiences.",
   });
 
+  function handleProfilePicUplode() {
+    // how can i uplode image ???
+  }
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="space-y-2 mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Account Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          Account Settings
+        </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           Manage your account settings and preferences
         </p>
@@ -60,11 +92,17 @@ export default function AccountPage() {
             <Activity className="h-4 w-4 sm:mr-2 hidden sm:inline" />
             Activity
           </TabsTrigger>
-          <TabsTrigger value="devices" className="text-xs sm:text-sm hidden lg:flex">
+          <TabsTrigger
+            value="devices"
+            className="text-xs sm:text-sm hidden lg:flex"
+          >
             <Smartphone className="h-4 w-4 mr-2" />
             Devices
           </TabsTrigger>
-          <TabsTrigger value="danger" className="text-xs sm:text-sm text-red-600 hidden sm:flex">
+          <TabsTrigger
+            value="danger"
+            className="text-xs sm:text-sm text-red-600 hidden sm:flex"
+          >
             <Trash2 className="h-4 w-4 sm:mr-2 hidden sm:inline" />
             Danger
           </TabsTrigger>
@@ -89,10 +127,9 @@ export default function AccountPage() {
                   </Button>
                 </div>
                 <CardDescription>
-                  {isEditingProfile 
+                  {isEditingProfile
                     ? "Update your personal information and profile picture"
-                    : "View your personal information and profile picture"
-                  }
+                    : "View your personal information and profile picture"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -101,15 +138,17 @@ export default function AccountPage() {
                   <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                     <AvatarImage src="/placeholder-avatar.jpg" alt="Profile" />
                     <AvatarFallback className="text-lg sm:text-xl">
-                      {profileData.firstName[0]}{profileData.lastName[0]}
+                      {profileData.firstName[0]}
+                      {profileData.lastName[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-3">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="w-full sm:w-auto"
                       disabled={!isEditingProfile}
+                      onClick={handleProfilePicUplode}
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Change Photo
@@ -128,10 +167,15 @@ export default function AccountPage() {
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
                       {isEditingProfile ? (
-                        <Input 
-                          id="firstName" 
+                        <Input
+                          id="firstName"
                           value={profileData.firstName}
-                          onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              firstName: e.target.value,
+                            })
+                          }
                         />
                       ) : (
                         <div className="p-2 border rounded-md bg-muted/30">
@@ -142,10 +186,15 @@ export default function AccountPage() {
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
                       {isEditingProfile ? (
-                        <Input 
-                          id="lastName" 
+                        <Input
+                          id="lastName"
                           value={profileData.lastName}
-                          onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              lastName: e.target.value,
+                            })
+                          }
                         />
                       ) : (
                         <div className="p-2 border rounded-md bg-muted/30">
@@ -162,7 +211,12 @@ export default function AccountPage() {
                         id="email"
                         type="email"
                         value={profileData.email}
-                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            email: e.target.value,
+                          })
+                        }
                       />
                     ) : (
                       <div className="p-2 border rounded-md bg-muted/30 flex items-center gap-2">
@@ -175,15 +229,20 @@ export default function AccountPage() {
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
                     {isEditingProfile ? (
-                      <Input 
-                        id="username" 
+                      <Input
+                        id="username"
                         value={profileData.username}
-                        onChange={(e) => setProfileData({...profileData, username: e.target.value})}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            username: e.target.value,
+                          })
+                        }
                       />
                     ) : (
                       <div className="p-2 border rounded-md bg-muted/30 flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        @{profileData.username}
+                        <User className="h-4 w-4 text-muted-foreground" />@
+                        {profileData.username}
                       </div>
                     )}
                   </div>
@@ -191,10 +250,15 @@ export default function AccountPage() {
                   <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
                     {isEditingProfile ? (
-                      <Input 
-                        id="bio" 
+                      <Input
+                        id="bio"
                         value={profileData.bio}
-                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            bio: e.target.value,
+                          })
+                        }
                       />
                     ) : (
                       <div className="p-2 border rounded-md bg-muted/30 min-h-[40px]">
@@ -206,14 +270,14 @@ export default function AccountPage() {
 
                 {isEditingProfile && (
                   <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                    <Button 
+                    <Button
                       className="w-full sm:w-auto"
                       onClick={() => setIsEditingProfile(false)}
                     >
                       Save Changes
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full sm:w-auto"
                       onClick={() => setIsEditingProfile(false)}
                     >
@@ -231,19 +295,27 @@ export default function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Member Since</span>
+                  <span className="text-sm text-muted-foreground">
+                    Member Since
+                  </span>
                   <Badge variant="secondary">Jan 2024</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Account Type</span>
+                  <span className="text-sm text-muted-foreground">
+                    Account Type
+                  </span>
                   <Badge variant="default">Premium</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Email Verified</span>
+                  <span className="text-sm text-muted-foreground">
+                    Email Verified
+                  </span>
                   <BadgeCheck className="h-4 w-4 text-green-600" />
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">2FA Enabled</span>
+                  <span className="text-sm text-muted-foreground">
+                    2FA Enabled
+                  </span>
                   <Badge variant="outline">No</Badge>
                 </div>
               </CardContent>
@@ -326,7 +398,9 @@ export default function AccountPage() {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -358,7 +432,9 @@ export default function AccountPage() {
                       Use an authenticator app to generate codes
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">Enable</Button>
+                  <Button variant="outline" size="sm">
+                    Enable
+                  </Button>
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="space-y-1">
@@ -367,7 +443,9 @@ export default function AccountPage() {
                       Receive codes via SMS message
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">Enable</Button>
+                  <Button variant="outline" size="sm">
+                    Enable
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -389,7 +467,9 @@ export default function AccountPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="email-notifications">Email Notifications</Label>
+                    <Label htmlFor="email-notifications">
+                      Email Notifications
+                    </Label>
                     <p className="text-sm text-muted-foreground">
                       Receive email updates about your account
                     </p>
@@ -407,7 +487,9 @@ export default function AccountPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="push-notifications">Push Notifications</Label>
+                    <Label htmlFor="push-notifications">
+                      Push Notifications
+                    </Label>
                     <p className="text-sm text-muted-foreground">
                       Receive push notifications in your browser
                     </p>
@@ -434,7 +516,10 @@ export default function AccountPage() {
                     id="marketing-emails"
                     checked={notifications.marketing}
                     onCheckedChange={(checked) =>
-                      setNotifications({ ...notifications, marketing: !!checked })
+                      setNotifications({
+                        ...notifications,
+                        marketing: !!checked,
+                      })
                     }
                   />
                 </div>
@@ -452,7 +537,10 @@ export default function AccountPage() {
                     id="security-alerts"
                     checked={notifications.security}
                     onCheckedChange={(checked) =>
-                      setNotifications({ ...notifications, security: !!checked })
+                      setNotifications({
+                        ...notifications,
+                        security: !!checked,
+                      })
                     }
                   />
                 </div>
@@ -483,7 +571,9 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <p className="font-medium">Email address updated</p>
-                      <p className="text-sm text-muted-foreground">2 hours ago</p>
+                      <p className="text-sm text-muted-foreground">
+                        2 hours ago
+                      </p>
                     </div>
                   </div>
                   <Badge variant="secondary">Success</Badge>
@@ -496,7 +586,9 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <p className="font-medium">Password changed</p>
-                      <p className="text-sm text-muted-foreground">2 days ago</p>
+                      <p className="text-sm text-muted-foreground">
+                        2 days ago
+                      </p>
                     </div>
                   </div>
                   <Badge variant="secondary">Success</Badge>
@@ -509,7 +601,9 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <p className="font-medium">Login from new device</p>
-                      <p className="text-sm text-muted-foreground">5 days ago</p>
+                      <p className="text-sm text-muted-foreground">
+                        5 days ago
+                      </p>
                     </div>
                   </div>
                   <Badge variant="outline">New</Badge>
@@ -539,12 +633,16 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <p className="font-medium">iPhone 14 Pro</p>
-                      <p className="text-sm text-muted-foreground">Last active: 2 hours ago</p>
+                      <p className="text-sm text-muted-foreground">
+                        Last active: 2 hours ago
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="secondary">Current</Badge>
-                    <Button variant="outline" size="sm">Remove</Button>
+                    <Button variant="outline" size="sm">
+                      Remove
+                    </Button>
                   </div>
                 </div>
 
@@ -555,10 +653,14 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <p className="font-medium">MacBook Pro</p>
-                      <p className="text-sm text-muted-foreground">Last active: 1 day ago</p>
+                      <p className="text-sm text-muted-foreground">
+                        Last active: 1 day ago
+                      </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">Remove</Button>
+                  <Button variant="outline" size="sm">
+                    Remove
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -581,7 +683,8 @@ export default function AccountPage() {
                 <div className="space-y-2">
                   <h3 className="font-medium text-red-900">Delete Account</h3>
                   <p className="text-sm text-red-700">
-                    Permanently delete your account and all associated data. This action cannot be undone.
+                    Permanently delete your account and all associated data.
+                    This action cannot be undone.
                   </p>
                 </div>
                 <Dialog>
@@ -594,12 +697,16 @@ export default function AccountPage() {
                     <DialogHeader>
                       <DialogTitle>Are you absolutely sure?</DialogTitle>
                       <DialogDescription>
-                        This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                        This action cannot be undone. This will permanently
+                        delete your account and remove your data from our
+                        servers.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-delete">Type "DELETE" to confirm</Label>
+                        <Label htmlFor="confirm-delete">
+                          Type "DELETE" to confirm
+                        </Label>
                         <Input id="confirm-delete" placeholder="DELETE" />
                       </div>
                     </div>
