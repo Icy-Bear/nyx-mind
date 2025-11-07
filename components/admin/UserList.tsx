@@ -23,19 +23,10 @@ import {
   Grid,
   List,
 } from "lucide-react";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  emailVerified: boolean;
-  image?: string | null;
-  createdAt?: Date;
-}
+import { SelectUser } from "@/db/schema";
 
 interface UserListProps {
-  users: User[];
+  users: SelectUser[];
 }
 
 export default function UserList({ users }: UserListProps) {

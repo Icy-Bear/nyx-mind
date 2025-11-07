@@ -44,7 +44,7 @@ const createUserSchema = z
     confirmPassword: z
       .string()
       .min(6, "Password must be at least 6 characters."),
-    role: z.enum(["ADMIN", "MEMBER"]),
+    role: z.enum(["admin", "user"]),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -64,7 +64,7 @@ export function AddUser() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "MEMBER",
+      role: "user",
     },
   });
 
@@ -189,8 +189,8 @@ export function AddUser() {
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MEMBER">Member</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

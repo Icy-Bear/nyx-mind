@@ -3,6 +3,7 @@ import { schema } from "@/db/schema";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -17,15 +18,9 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
     },
-    additionalFields: {
-      role: {
-        type: ["ADMIN", "MEMBER"],
-        input: false,
-      },
-    },
   },
   session: {
     expiresIn: 30 * 24 * 60 * 60,
   },
-  plugins: [nextCookies()],
+  plugins: [nextCookies(), admin()],
 });

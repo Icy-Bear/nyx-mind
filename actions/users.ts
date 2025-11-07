@@ -5,6 +5,7 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { email } from "zod";
 
 export async function getAllUsers() {
   try {
@@ -20,7 +21,7 @@ export async function createUser(data: {
   name: string;
   email: string;
   password: string;
-  role: "ADMIN" | "MEMBER";
+  role: "admin" | "user";
 }) {
   try {
     const existingUser = await db
@@ -33,26 +34,18 @@ export async function createUser(data: {
       throw new Error("User with this email already exists");
     }
 
-    const result = await auth.api.signUpEmail({
+    await auth.api.createUser({
       body: {
-        name: data.name,
         email: data.email,
         password: data.password,
+        name: data.name,
+        role: data.role,
       },
     });
 
-    if (!result.user) {
-      throw new Error("Failed to create user");
-    }
-
-    await db
-      .update(user)
-      .set({ role: data.role })
-      .where(eq(user.id, result.user.id));
-
     revalidatePath("/dashboard/users");
 
-    return { ...result.user, role: data.role };
+    return {};
   } catch (error) {
     console.error("Error creating user:", error);
     if (error instanceof Error) {
