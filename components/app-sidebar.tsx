@@ -2,18 +2,12 @@
 
 import * as React from "react";
 import {
-  IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileWord,
-  IconFolder,
   IconInnerShadowTop,
-  IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
   IconUser,
-  IconUsers,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";

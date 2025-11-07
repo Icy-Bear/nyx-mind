@@ -705,7 +705,7 @@ export default function AccountPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="confirm-delete">
-                          Type "DELETE" to confirm
+                          Type &quot;DELETE&quot; to confirm
                         </Label>
                         <Input id="confirm-delete" placeholder="DELETE" />
                       </div>
