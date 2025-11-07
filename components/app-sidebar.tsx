@@ -24,13 +24,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Spinner } from "./ui/spinner";
-import { useUserStore } from "@/store/useUserStore";
+import { useSession } from "@/lib/auth-client";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useUserStore();
+  const { isPending, data } = useSession();
 
-  const data = {
-    user: user,
+  const sideNavData = {
+    user: data?.user,
     navMain: [
       {
         title: "Dashboard",
@@ -81,17 +81,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={sideNavData.navMain} />
+        <NavDocuments items={sideNavData.documents} />
+        <NavSecondary items={sideNavData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        {user == null ? (
+        {isPending ? (
           <div className="flex justify-center items-center">
             <Spinner />
           </div>
         ) : (
-          <NavUser user={user} />
+          <NavUser user={data!.user!} />
         )}
       </SidebarFooter>
     </Sidebar>

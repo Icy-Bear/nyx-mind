@@ -26,7 +26,6 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BadgeCheck,
-  Calendar,
   Camera,
   Eye,
   EyeOff,
@@ -38,12 +37,15 @@ import {
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
+import { authClient } from "@/lib/auth-client";
 
 export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isPending, data } = useSession();
   const [profileData, setProfileData] = useState({
     firstName: "",
@@ -66,6 +68,20 @@ export default function AccountPage() {
       });
     }
   }, [data]);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== "DELETE") return;
+    
+    setIsDeleting(true);
+    try {
+      await authClient.deleteUser();
+      // After successful deletion, redirect to goodbye page
+      window.location.href = "/goodbye";
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      setIsDeleting(false);
+    }
+  };
 
   if (isPending) {
     return (
@@ -567,12 +583,23 @@ export default function AccountPage() {
                         <Label htmlFor="confirm-delete">
                           Type &quot;DELETE&quot; to confirm
                         </Label>
-                        <Input id="confirm-delete" placeholder="DELETE" />
+                        <Input 
+                          id="confirm-delete" 
+                          placeholder="DELETE" 
+                          value={deleteConfirmation}
+                          onChange={(e) => setDeleteConfirmation(e.target.value)}
+                        />
                       </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline">Cancel</Button>
-                      <Button variant="destructive">Delete Account</Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteAccount}
+                        disabled={deleteConfirmation !== "DELETE" || isDeleting}
+                      >
+                        {isDeleting ? "Deleting..." : "Delete Account"}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>

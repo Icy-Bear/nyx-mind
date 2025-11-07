@@ -27,12 +27,25 @@ import {
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { Badge } from "./ui/badge";
-import { SelectUser } from "@/db/schema";
 import { useUserStore } from "@/store/useUserStore";
 import { toast } from "sonner";
 import Link from "next/link";
 
-export function NavUser({ user }: { user: SelectUser }) {
+interface User {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  image?: string | null | undefined;
+  banned: boolean | null | undefined;
+  role?: string | null | undefined;
+  banReason?: string | null | undefined;
+  banExpires?: Date | null | undefined;
+}
+
+export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
   const { clearUser } = useUserStore();
