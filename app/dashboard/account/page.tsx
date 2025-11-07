@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -39,28 +38,29 @@ import {
   Activity,
   Smartphone,
 } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    marketing: true,
-    security: true,
-  });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const { isPending, data } = useSession();
   const [profileData, setProfileData] = useState({
-    firstName: "John",
+    firstName: "hii",
     lastName: "Doe",
     email: "john.doe@example.com",
     username: "johndoe",
     bio: "Full-stack developer passionate about building great user experiences.",
   });
 
-  function handleProfilePicUplode() {
-    // how can i uplode image ???
+  if (isPending) {
+    return (
+      <div className="flex h-screen justify-center items-center">
+        <Spinner />
+      </div>
+    );
   }
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -83,14 +83,6 @@ export default function AccountPage() {
           <TabsTrigger value="security" className="text-xs sm:text-sm">
             <Shield className="h-4 w-4 sm:mr-2 hidden sm:inline" />
             Security
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="text-xs sm:text-sm">
-            <Bell className="h-4 w-4 sm:mr-2 hidden sm:inline" />
-            Alerts
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs sm:text-sm">
-            <Activity className="h-4 w-4 sm:mr-2 hidden sm:inline" />
-            Activity
           </TabsTrigger>
           <TabsTrigger
             value="devices"
@@ -138,8 +130,8 @@ export default function AccountPage() {
                   <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                     <AvatarImage src="/placeholder-avatar.jpg" alt="Profile" />
                     <AvatarFallback className="text-lg sm:text-xl">
-                      {profileData.firstName[0]}
-                      {profileData.lastName[0]}
+                      {data?.user.name[0].toUpperCase()}
+                      {data?.user.name[1].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-3">
@@ -148,7 +140,6 @@ export default function AccountPage() {
                       size="sm"
                       className="w-full sm:w-auto"
                       disabled={!isEditingProfile}
-                      onClick={handleProfilePicUplode}
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Change Photo
@@ -169,7 +160,8 @@ export default function AccountPage() {
                       {isEditingProfile ? (
                         <Input
                           id="firstName"
-                          value={profileData.firstName}
+                          // value={data?.user.name.split(" ")[0]}
+                          value={"hello"}
                           onChange={(e) =>
                             setProfileData({
                               ...profileData,
@@ -450,167 +442,6 @@ export default function AccountPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notification Preferences
-              </CardTitle>
-              <CardDescription>
-                Choose how you want to receive notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="email-notifications">
-                      Email Notifications
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive email updates about your account
-                    </p>
-                  </div>
-                  <Checkbox
-                    id="email-notifications"
-                    checked={notifications.email}
-                    onCheckedChange={(checked) =>
-                      setNotifications({ ...notifications, email: !!checked })
-                    }
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="push-notifications">
-                      Push Notifications
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive push notifications in your browser
-                    </p>
-                  </div>
-                  <Checkbox
-                    id="push-notifications"
-                    checked={notifications.push}
-                    onCheckedChange={(checked) =>
-                      setNotifications({ ...notifications, push: !!checked })
-                    }
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="marketing-emails">Marketing Emails</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive emails about new features and updates
-                    </p>
-                  </div>
-                  <Checkbox
-                    id="marketing-emails"
-                    checked={notifications.marketing}
-                    onCheckedChange={(checked) =>
-                      setNotifications({
-                        ...notifications,
-                        marketing: !!checked,
-                      })
-                    }
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="security-alerts">Security Alerts</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Get notified about important security events
-                    </p>
-                  </div>
-                  <Checkbox
-                    id="security-alerts"
-                    checked={notifications.security}
-                    onCheckedChange={(checked) =>
-                      setNotifications({
-                        ...notifications,
-                        security: !!checked,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <Button>Save Preferences</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Recent Activity
-              </CardTitle>
-              <CardDescription>
-                Your recent account activity and login history
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-full">
-                      <Mail className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Email address updated</p>
-                      <p className="text-sm text-muted-foreground">
-                        2 hours ago
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">Success</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Shield className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Password changed</p>
-                      <p className="text-sm text-muted-foreground">
-                        2 days ago
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">Success</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Calendar className="h-4 w-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Login from new device</p>
-                      <p className="text-sm text-muted-foreground">
-                        5 days ago
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline">New</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="devices" className="space-y-6">
