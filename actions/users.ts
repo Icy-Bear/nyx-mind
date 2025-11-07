@@ -4,6 +4,7 @@ import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 export async function getAllUsers() {
   try {
@@ -48,6 +49,8 @@ export async function createUser(data: {
       .update(user)
       .set({ role: data.role })
       .where(eq(user.id, result.user.id));
+
+    revalidatePath("/dashboard/users");
 
     return { ...result.user, role: data.role };
   } catch (error) {

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IRM Portel",
+  title: "Nyx Minds",
   description:
-    "this is a Incubation Resorce Management Portel, that is used to manage the incubation for TIT-E",
+    "Nyx Minds is a pioneering technology company that harnesses the power of innovation to illuminate the digital landscape. We specialize in crafting intelligent, user-centric software solutions that empower businesses to thrive in an ever-evolving world, blending creativity, security, and scalability to turn complex challenges into seamless opportunities.",
 };
 
 export default function RootLayout({
