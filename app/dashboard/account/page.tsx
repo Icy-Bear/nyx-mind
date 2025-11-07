@@ -71,7 +71,7 @@ export default function AccountPage() {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== "DELETE") return;
-    
+
     setIsDeleting(true);
     try {
       await authClient.deleteUser();
@@ -121,9 +121,9 @@ export default function AccountPage() {
           </TabsTrigger>
           <TabsTrigger
             value="danger"
-            className="text-xs sm:text-sm text-red-600 hidden sm:flex"
+            className="text-xs sm:text-sm text-red-600 flex"
           >
-            <Trash2 className="h-4 w-4 sm:mr-2 hidden sm:inline" />
+            <Trash2 className="h-4 w-4 sm:mr-2 sm:inline" />
             Danger
           </TabsTrigger>
         </TabsList>
@@ -583,18 +583,20 @@ export default function AccountPage() {
                         <Label htmlFor="confirm-delete">
                           Type &quot;DELETE&quot; to confirm
                         </Label>
-                        <Input 
-                          id="confirm-delete" 
-                          placeholder="DELETE" 
+                        <Input
+                          id="confirm-delete"
+                          placeholder="DELETE"
                           value={deleteConfirmation}
-                          onChange={(e) => setDeleteConfirmation(e.target.value)}
+                          onChange={(e) =>
+                            setDeleteConfirmation(e.target.value)
+                          }
                         />
                       </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline">Cancel</Button>
-                      <Button 
-                        variant="destructive" 
+                      <Button
+                        variant="destructive"
                         onClick={handleDeleteAccount}
                         disabled={deleteConfirmation !== "DELETE" || isDeleting}
                       >

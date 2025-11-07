@@ -46,7 +46,7 @@ interface User {
 }
 
 export function NavUser({ user }: { user: User }) {
-  const { isMobile } = useSidebar();
+  const { isMobile, toggleSidebar } = useSidebar();
   const router = useRouter();
   const { clearUser } = useUserStore();
 
@@ -124,12 +124,17 @@ export function NavUser({ user }: { user: User }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link href={"/dashboard/account"}>
-                <DropdownMenuItem>
-                  <IconUserCircle />
-                  Account
-                </DropdownMenuItem>
-              </Link>
+              <DropdownMenuItem
+                onClick={() => {
+                  router.push("/dashboard/account");
+                  if (isMobile) {
+                    toggleSidebar();
+                  }
+                }}
+              >
+                <IconUserCircle />
+                Account
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconCreditCard />
                 Billing
