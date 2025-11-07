@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,6 @@ import {
   Shield,
   Trash2,
   User,
-  Bell,
-  Activity,
   Smartphone,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
@@ -48,12 +46,26 @@ export default function AccountPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const { isPending, data } = useSession();
   const [profileData, setProfileData] = useState({
-    firstName: "hii",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    username: "johndoe",
+    firstName: "",
+    lastName: "",
+    email: "",
+    username: "",
     bio: "Full-stack developer passionate about building great user experiences.",
   });
+
+  // Update profile data when session data is available
+  useEffect(() => {
+    if (data?.user) {
+      const nameParts = data.user.name?.split(" ") || [];
+      setProfileData({
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || " ",
+        email: data.user.email || "",
+        username: data.user.email?.split("@")[0] || "",
+        bio: "Full-stack developer passionate about building great user experiences.",
+      });
+    }
+  }, [data]);
 
   if (isPending) {
     return (
@@ -128,10 +140,10 @@ export default function AccountPage() {
                 {/* Avatar Section */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                   <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-                    <AvatarImage src="/placeholder-avatar.jpg" alt="Profile" />
+                    <AvatarImage src={data?.user.image || ""} alt="Profile" />
                     <AvatarFallback className="text-lg sm:text-xl">
-                      {data?.user.name[0].toUpperCase()}
-                      {data?.user.name[1].toUpperCase()}
+                      {profileData.firstName[0]?.toUpperCase() || "U"}
+                      {profileData.lastName[0]?.toUpperCase() || "N"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-3">
@@ -290,19 +302,36 @@ export default function AccountPage() {
                   <span className="text-sm text-muted-foreground">
                     Member Since
                   </span>
-                  <Badge variant="secondary">Jan 2024</Badge>
+                  <Badge variant="secondary">
+                    {data?.user.createdAt
+                      ? new Date(data.user.createdAt).toLocaleDateString(
+                          "en-US",
+                          { month: "short", year: "numeric" }
+                        )
+                      : "Unknown"}
+                  </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">
                     Account Type
                   </span>
-                  <Badge variant="default">Premium</Badge>
+                  <Badge
+                    variant={
+                      data?.user.role === "admin" ? "default" : "secondary"
+                    }
+                  >
+                    {data?.user.role || "User"}
+                  </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">
                     Email Verified
                   </span>
-                  <BadgeCheck className="h-4 w-4 text-green-600" />
+                  {data?.user.emailVerified ? (
+                    <BadgeCheck className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Badge variant="outline">No</Badge>
+                  )}
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">

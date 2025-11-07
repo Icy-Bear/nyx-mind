@@ -5,7 +5,6 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { email } from "zod";
 
 export async function getAllUsers() {
   try {
