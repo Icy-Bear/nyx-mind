@@ -29,7 +29,6 @@ import { signOut } from "@/lib/auth-client";
 import { Badge } from "./ui/badge";
 import { useUserStore } from "@/store/useUserStore";
 import { toast } from "sonner";
-import Link from "next/link";
 
 interface User {
   id: string;

@@ -93,11 +93,8 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="space-y-2 mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Account Settings
-        </h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
+      <div className="space-y-2 ">
+        <p className="text-muted-foreground text-sm sm:text-base mb-6 sm:mb-8">
           Manage your account settings and preferences
         </p>
       </div>
