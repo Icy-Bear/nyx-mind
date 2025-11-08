@@ -27,8 +27,19 @@ export default function HomePage() {
       {/* Header */}
       <header className="flex justify-between items-center p-6 border-b">
         <div className="flex gap-2">
-          <Image src="/nyx-logo.png" alt="Hero" width={28} height={28} />
-          <h1 className="text-2xl font-bold text-primary">Nyx Minds</h1>
+          <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8">
+            <Image
+              src="/nyx-logo.png"
+              alt="Hero"
+              width={32}
+              height={32}
+              className="w-full h-full object-contain"
+            />
+          </div>
+
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+            Nyx Minds
+          </h1>
         </div>
         <div className="flex space-x-4">
           <Button variant="ghost" asChild>

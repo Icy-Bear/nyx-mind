@@ -90,8 +90,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="flex justify-center items-center">
             <Spinner />
           </div>
+        ) : data?.user ? (
+          <NavUser user={data.user} />
         ) : (
-          <NavUser user={data!.user!} />
+          <div className="flex justify-center items-center">
+            <Spinner />
+          </div>
         )}
       </SidebarFooter>
     </Sidebar>
