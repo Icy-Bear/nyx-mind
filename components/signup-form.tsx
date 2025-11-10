@@ -65,7 +65,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
         },
         onSuccess: () => {
           toast.success("Great to see you back");
-          revalidatePathClient("/dashboard");
+          revalidatePathClient("/dashboard/users");
           router.replace("/dashboard");
         },
       }
