@@ -2,9 +2,9 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getLeaveBalance, getLeaveHistory, getPendingLeaveRequests } from "@/actions/leave";
 import LeaveBalance from "@/components/LeaveBalance";
-import ApplyLeaveForm from "@/components/ApplyLeaveForm";
 import LeaveHistory from "@/components/LeaveHistory";
 import LeaveApproval from "@/components/admin/LeaveApproval";
+import ApplyLeaveDialog from "@/components/ApplyLeaveDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, AlertCircle } from "lucide-react";
@@ -89,41 +89,11 @@ export default async function LeavePage() {
         <LeaveBalance balance={balance} />
       </div>
 
-      {/* Main Content */}
-      <Tabs defaultValue="apply" className="w-full max-w-6xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="apply" className="text-xs sm:text-sm">
-            <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline" />
-            Apply for Leave
-          </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs sm:text-sm">
-            <Clock className="h-4 w-4 sm:mr-2 hidden sm:inline" />
-            Leave History
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="apply" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Submit Leave Request
-              </CardTitle>
-              <CardDescription>
-                Fill out the form below to apply for leave. Your request will be
-                reviewed by your manager.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ApplyLeaveForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <LeaveHistory requests={formattedHistory} />
-        </TabsContent>
-      </Tabs>
+      {/* Leave History */}
+      <LeaveHistory requests={formattedHistory} />
+      
+      {/* Apply Leave Dialog */}
+      <ApplyLeaveDialog />
     </div>
   );
 }
