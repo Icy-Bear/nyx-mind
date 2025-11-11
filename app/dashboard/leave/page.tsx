@@ -33,19 +33,19 @@ export default async function LeavePage() {
     }));
 
     return (
-      <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-background p-3 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold">Leave Management</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
+            <h1 className="text-xl sm:text-2xl font-bold">Leave Management</h1>
+            <p className="text-muted-foreground text-sm sm:text-base mt-1">
               Review and manage employee leave requests
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <AlertCircle className="h-4 w-4" />
-            <span>{formattedRequests.length} pending requests</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{formattedRequests.length} pending request{formattedRequests.length !== 1 ? "s" : ""}</span>
           </div>
         </div>
 
@@ -68,19 +68,19 @@ export default async function LeavePage() {
   }));
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-3 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-bold">My Leave</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <h1 className="text-xl sm:text-2xl font-bold">My Leave</h1>
+          <p className="text-muted-foreground text-sm sm:text-base mt-1">
             Manage your leave requests and view your balance
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          <span>{formattedHistory.length} total requests</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+          <Calendar className="h-4 w-4 flex-shrink-0" />
+          <span>{formattedHistory.length} total request{formattedHistory.length !== 1 ? "s" : ""}</span>
         </div>
       </div>
 

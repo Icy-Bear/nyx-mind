@@ -86,26 +86,29 @@ export function LeaveHistory({ requests }: LeaveHistoryProps) {
       {/* Filter Section */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Requests</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Approved">Approved</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-muted-foreground">
-                {filteredRequests.length} of {requests.length} requests
-              </span>
+          <div className="space-y-4 sm:space-y-0">
+            {/* Filter Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Requests</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Approved">Approved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">
+                  {filteredRequests.length} of {requests.length} requests
+                </span>
+              </div>
             </div>
             
             {/* Status Summary */}
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                 <span>Pending: {requests.filter(r => r.status === "Pending").length}</span>
@@ -128,62 +131,66 @@ export function LeaveHistory({ requests }: LeaveHistoryProps) {
         {filteredRequests.map((request) => (
           <Card key={request.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${
-                    request.status === "Approved" ? "bg-green-100" :
-                    request.status === "Rejected" ? "bg-red-100" :
-                    "bg-yellow-100"
-                  }`}>
-                    {getStatusIcon(request.status)}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`p-2 rounded-full flex-shrink-0 ${
+                      request.status === "Approved" ? "bg-green-100" :
+                      request.status === "Rejected" ? "bg-red-100" :
+                      "bg-yellow-100"
+                    }`}>
+                      {getStatusIcon(request.status)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base truncate">
+                        {request.leaveType} Leave
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">
+                        ID: {request.id.slice(0, 8)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-base">
-                      {request.leaveType} Leave
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Request ID: {request.id.slice(0, 8)}
-                    </p>
+                  <div className="flex-shrink-0">
+                    {getStatusBadge(request.status)}
                   </div>
                 </div>
-                {getStatusBadge(request.status)}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Date and Duration Info */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">From</p>
-                    <p className="text-xs text-muted-foreground">
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-xs">From</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {new Date(request.fromDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">To</p>
-                    <p className="text-xs text-muted-foreground">
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-xs">To</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {new Date(request.toDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Duration</p>
+                  <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-xs">Duration</p>
                     <p className="text-xs text-muted-foreground">
                       {request.totalDays} {request.totalDays === 1 ? "day" : "days"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Submitted</p>
-                    <p className="text-xs text-muted-foreground">
+                  <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-xs">Submitted</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {new Date(request.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -195,12 +202,12 @@ export function LeaveHistory({ requests }: LeaveHistoryProps) {
               {/* Justification */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="font-medium text-sm">Justification</span>
                 </div>
-                <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md">
-                  {request.reason}
-                </p>
+                <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md break-words">
+                  <p className="whitespace-pre-wrap">{request.reason}</p>
+                </div>
               </div>
 
               {/* Processed By */}

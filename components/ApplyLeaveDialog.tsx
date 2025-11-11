@@ -117,7 +117,7 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:w-full">
         <DialogTitle>Apply for Leave</DialogTitle>
         <DialogDescription>
           Submit your leave request for review by your manager.
@@ -258,7 +258,7 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
             />
 
             {/* Leave Policy Info */}
-            <div className="bg-muted/30 p-4 rounded-md text-sm text-muted-foreground">
+            <div className="bg-muted/30 p-3 sm:p-4 rounded-md text-sm text-muted-foreground">
               <p className="font-medium mb-2">Leave Policy</p>
               <ul className="space-y-1 text-xs">
                 <li>• Submit requests at least 2 days in advance</li>

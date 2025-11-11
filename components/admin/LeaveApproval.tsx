@@ -94,8 +94,8 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
     <div className="space-y-6">
       {/* Summary Card */}
       <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-yellow-100 rounded-full">
                 <AlertCircle className="h-6 w-6 text-yellow-600" />
@@ -107,7 +107,7 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-center sm:text-right">
               <div className="text-2xl font-bold text-yellow-600">{requests.length}</div>
               <div className="text-xs text-muted-foreground">Pending</div>
             </div>
@@ -120,58 +120,60 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
         {requests.map((request) => (
           <Card key={request.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="text-lg font-semibold">
-                      {request.userName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">{request.userName}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="h-3 w-3" />
-                      {request.userEmail}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Avatar className="h-12 w-12 flex-shrink-0">
+                      <AvatarFallback className="text-lg font-semibold">
+                        {request.userName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-lg truncate">{request.userName}</CardTitle>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{request.userEmail}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    variant="secondary" 
-                    className="bg-yellow-100 text-yellow-800 border-yellow-200"
-                  >
-                    {request.leaveType} Leave
-                  </Badge>
-                  <Badge variant="outline">
-                    {request.totalDays} {request.totalDays === 1 ? "day" : "days"}
-                  </Badge>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                    >
+                      {request.leaveType} Leave
+                    </Badge>
+                    <Badge variant="outline">
+                      {request.totalDays} {request.totalDays === 1 ? "day" : "days"}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Request Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-muted-foreground">From</p>
-                    <p className="text-sm">
+                    <p className="text-sm truncate">
                       {new Date(request.fromDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-muted-foreground">To</p>
-                    <p className="text-sm">
+                    <p className="text-sm truncate">
                       {new Date(request.toDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <div>
+                  <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-muted-foreground">Duration</p>
                     <p className="text-sm">
                       {request.totalDays} {request.totalDays === 1 ? "day" : "days"}
@@ -179,10 +181,10 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <div>
+                  <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-muted-foreground">Submitted</p>
-                    <p className="text-sm">
+                    <p className="text-sm truncate">
                       {new Date(request.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -194,12 +196,12 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
               {/* Justification */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="font-medium text-sm">Justification for Leave</span>
                 </div>
-                <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md">
-                  {request.reason}
-                </p>
+                <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md break-words">
+                  <p className="whitespace-pre-wrap">{request.reason}</p>
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -207,7 +209,7 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
                 <Button
                   onClick={() => handleApprove(request.id)}
                   disabled={processing === request.id}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:flex-1"
                   variant="default"
                 >
                   {processing === request.id ? (
@@ -218,14 +220,15 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve Request
+                      <span className="sm:hidden">Approve</span>
+                      <span className="hidden sm:inline">Approve Request</span>
                     </>
                   )}
                 </Button>
                 <Button
                   onClick={() => handleReject(request.id)}
                   disabled={processing === request.id}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:flex-1"
                   variant="destructive"
                 >
                   {processing === request.id ? (
@@ -236,7 +239,8 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
                   ) : (
                     <>
                       <XCircle className="h-4 w-4 mr-2" />
-                      Reject Request
+                      <span className="sm:hidden">Reject</span>
+                      <span className="hidden sm:inline">Reject Request</span>
                     </>
                   )}
                 </Button>
