@@ -8,7 +8,6 @@ import {
   IconSettings,
   IconUser,
 } from "@tabler/icons-react";
-import Image from "next/image";
 
 import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
@@ -73,16 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8">
-                  <Image
-                    src="/nyx-logo.png"
-                    alt="Hero"
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="text-base font-semibold">Nyx Minds</span>
+                <span className="text-base font-semibold">Auth Template</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

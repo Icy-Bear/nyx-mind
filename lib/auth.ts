@@ -22,5 +22,11 @@ export const auth = betterAuth({
   session: {
     expiresIn: 30 * 24 * 60 * 60,
   },
-  plugins: [nextCookies(), admin()],
+  plugins: [
+    nextCookies(),
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
+    }),
+  ],
 });

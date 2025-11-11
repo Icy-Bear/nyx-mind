@@ -1,7 +1,8 @@
 {
-  "name": "irm-portel",
+  "name": "nextjs-auth-template",
   "version": "0.1.0",
   "private": true,
+  "description": "A Next.js authentication template with admin dashboard, user management, and better-auth integration",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",

@@ -27,7 +27,6 @@ import {
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { Badge } from "./ui/badge";
-import { useUserStore } from "@/store/useUserStore";
 import { toast } from "sonner";
 
 interface User {
@@ -47,7 +46,6 @@ interface User {
 export function NavUser({ user }: { user: User }) {
   const { isMobile, toggleSidebar } = useSidebar();
   const router = useRouter();
-  const { clearUser } = useUserStore();
 
   async function handleLogOut() {
     await signOut({
@@ -56,7 +54,6 @@ export function NavUser({ user }: { user: User }) {
           toast.error(ctx.error.message);
         },
         onSuccess: () => {
-          clearUser();
           toast.success("Good bey, See you soon");
           router.push("/auth/login");
         },
@@ -94,7 +91,7 @@ export function NavUser({ user }: { user: User }) {
                 </span>
               </div>
               <Badge
-                variant={user.role === "ADMIN" ? "destructive" : "outline"}
+                variant={user.role === "admin" ? "destructive" : "outline"}
               >
                 {user.role}
               </Badge>

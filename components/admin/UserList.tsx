@@ -5,6 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -24,15 +32,23 @@ import {
   List,
 } from "lucide-react";
 import { SelectUser } from "@/db/schema";
+import { deleteUser } from "@/actions/users";
+import { toast } from "sonner";
 
 interface UserListProps {
   users: SelectUser[];
+  currentUserId: string;
 }
 
-export default function UserList({ users }: UserListProps) {
+export default function UserList({ users, currentUserId }: UserListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    userId: string;
+    userName: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -41,6 +57,26 @@ export default function UserList({ users }: UserListProps) {
     const matchesRole = filterRole === "all" || user.role === filterRole;
     return matchesSearch && matchesRole;
   });
+
+  // ✅ Move current user to top
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (a.id === currentUserId) return -1;
+    if (b.id === currentUserId) return 1;
+    return 0;
+  });
+
+  async function handleDeleteUser(userId: string) {
+    try {
+      setIsDeleting(true);
+      await deleteUser(userId);
+      toast.success("User deleted successfully");
+      setDeleteConfirm(null);
+    } catch {
+      toast.error("Failed to delete user");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -67,18 +103,19 @@ export default function UserList({ users }: UserListProps) {
                   All
                 </Button>
                 <Button
-                  variant={filterRole === "ADMIN" ? "default" : "outline"}
+                  variant={filterRole === "admin" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFilterRole("ADMIN")}
+                  onClick={() => setFilterRole("admin")}
                 >
                   Admins
                 </Button>
+
                 <Button
-                  variant={filterRole === "MEMBER" ? "default" : "outline"}
+                  variant={filterRole === "user" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFilterRole("MEMBER")}
+                  onClick={() => setFilterRole("user")}
                 >
-                  Members
+                  Users
                 </Button>
               </div>
             </div>
@@ -86,8 +123,8 @@ export default function UserList({ users }: UserListProps) {
             {/* View Toggle */}
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                {filteredUsers.length} user
-                {filteredUsers.length !== 1 ? "s" : ""} found
+                {sortedUsers.length} user
+                {sortedUsers.length !== 1 ? "s" : ""} found
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex">
@@ -117,8 +154,13 @@ export default function UserList({ users }: UserListProps) {
       {/* User Grid/List */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredUsers.map((user) => (
-            <Card key={user.id} className="hover:shadow-md transition-shadow">
+          {sortedUsers.map((user) => (
+            <Card
+              key={user.id}
+              className={`hover:shadow-md transition-shadow ${
+                user.id === currentUserId ? "ring-2 ring-primary" : ""
+              }`}
+            >
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -132,8 +174,16 @@ export default function UserList({ users }: UserListProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-base sm:text-lg truncate">
+                      <h3 className="font-semibold text-base sm:text-lg truncate flex gap-2 items-center">
                         {user.name}
+                        {user.id === currentUserId && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-primary text-primary"
+                          >
+                            You
+                          </Badge>
+                        )}
                       </h3>
                       <p className="text-sm text-muted-foreground truncate">
                         {user.email}
@@ -152,7 +202,15 @@ export default function UserList({ users }: UserListProps) {
                         <Edit className="h-4 w-4 mr-2" />
                         Edit User
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setDeleteConfirm({
+                            userId: user.id,
+                            userName: user.name,
+                          })
+                        }
+                        className="text-red-600"
+                      >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete User
                       </DropdownMenuItem>
@@ -163,7 +221,11 @@ export default function UserList({ users }: UserListProps) {
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
-                      variant={user.role === "ADMIN" ? "default" : "secondary"}
+                      variant={
+                        user.role === "admin"
+                          ? "default"
+                          : "secondary"
+                      }
                       className="text-xs"
                     >
                       <Shield className="h-3 w-3 mr-1" />
@@ -200,8 +262,13 @@ export default function UserList({ users }: UserListProps) {
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredUsers.map((user) => (
-            <Card key={user.id} className="hover:shadow-md transition-shadow">
+          {sortedUsers.map((user) => (
+            <Card
+              key={user.id}
+              className={`hover:shadow-md transition-shadow ${
+                user.id === currentUserId ? "ring-2 ring-primary" : ""
+              }`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -216,8 +283,16 @@ export default function UserList({ users }: UserListProps) {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                        <h3 className="font-semibold text-sm sm:text-base truncate">
+                        <h3 className="font-semibold text-sm sm:text-base truncate flex items-center gap-2">
                           {user.name}
+                          {user.id === currentUserId && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-primary text-primary"
+                            >
+                              You
+                            </Badge>
+                          )}
                         </h3>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {user.email}
@@ -225,9 +300,11 @@ export default function UserList({ users }: UserListProps) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <Badge
-                          variant={
-                            user.role === "ADMIN" ? "default" : "secondary"
-                          }
+                        variant={
+                          user.role === "admin"
+                            ? "default"
+                            : "secondary"
+                        }
                           className="text-xs"
                         >
                           <Shield className="h-3 w-3 mr-1" />
@@ -281,7 +358,15 @@ export default function UserList({ users }: UserListProps) {
                           <Edit className="h-4 w-4 mr-2" />
                           Edit User
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setDeleteConfirm({
+                              userId: user.id,
+                              userName: user.name,
+                            })
+                          }
+                          className="text-red-600"
+                        >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete User
                         </DropdownMenuItem>
@@ -296,7 +381,7 @@ export default function UserList({ users }: UserListProps) {
       )}
 
       {/* Empty State */}
-      {filteredUsers.length === 0 && (
+      {sortedUsers.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
             <div className="space-y-3">
@@ -315,12 +400,47 @@ export default function UserList({ users }: UserListProps) {
       )}
 
       {/* Results Summary */}
-      {filteredUsers.length > 0 && (
+      {sortedUsers.length > 0 && (
         <div className="text-center text-sm text-muted-foreground">
-          Showing {filteredUsers.length} of {users.length} users •{" "}
+          Showing {sortedUsers.length} of {users.length} users •{" "}
           {viewMode === "grid" ? "Grid" : "List"} view
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{deleteConfirm?.userName}</strong>? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirm(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                deleteConfirm && handleDeleteUser(deleteConfirm.userId)
+              }
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

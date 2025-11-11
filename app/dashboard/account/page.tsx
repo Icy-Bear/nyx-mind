@@ -35,9 +35,8 @@ import {
   User,
   Smartphone,
 } from "lucide-react";
-import { useSession } from "@/lib/auth-client";
+import { deleteUser, useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
 
 export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -74,7 +73,7 @@ export default function AccountPage() {
 
     setIsDeleting(true);
     try {
-      await authClient.deleteUser();
+      await deleteUser();
       // After successful deletion, redirect to goodbye page
       window.location.href = "/goodbye";
     } catch (error) {

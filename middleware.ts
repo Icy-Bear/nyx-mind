@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-const protectedRoutes = ["/dashboard"];
-const publicRoutes = ["/goodbye", "/auth"];
-
 export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const sessionCookie = getSessionCookie(req);
 
-  const res = NextResponse.next();
-
   const isLoggedIn = !!sessionCookie;
-  const isOnProtectedRoute = protectedRoutes.includes(nextUrl.pathname);
+  const isOnProtectedRoute = nextUrl.pathname.startsWith("/dashboard");
   const isOnAuthRoute = nextUrl.pathname.startsWith("/auth");
-  const isOnPublicRoute = publicRoutes.includes(nextUrl.pathname);
+  const isOnPublicRoute =
+    nextUrl.pathname.startsWith("/goodbye") ||
+    nextUrl.pathname.startsWith("/auth");
 
-  // Allow access to public routes regardless of auth status
-  if (isOnPublicRoute) {
-    return res;
-  }
+  if (isOnPublicRoute) return NextResponse.next();
 
   if (isOnProtectedRoute && !isLoggedIn) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
@@ -28,7 +22,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  return res;
+  return NextResponse.next();
 }
 
 export const config = {

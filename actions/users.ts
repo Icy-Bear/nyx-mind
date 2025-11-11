@@ -5,6 +5,7 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export async function getAllUsers() {
   try {
@@ -20,7 +21,7 @@ export async function createUser(data: {
   name: string;
   email: string;
   password: string;
-  role: "admin" | "user";
+  role: "user" | "admin";
 }) {
   try {
     const existingUser = await db
@@ -33,14 +34,19 @@ export async function createUser(data: {
       throw new Error("User with this email already exists");
     }
 
-    await auth.api.createUser({
+    await auth.api.signUpEmail({
       body: {
         email: data.email,
         password: data.password,
         name: data.name,
-        role: data.role,
       },
     });
+
+    // Update the role after creation
+    await db
+      .update(user)
+      .set({ role: data.role })
+      .where(eq(user.email, data.email));
 
     revalidatePath("/dashboard/users");
 
@@ -51,5 +57,20 @@ export async function createUser(data: {
       throw error;
     }
     throw new Error("Failed to create user");
+  }
+}
+
+export async function deleteUser(userId: string) {
+  try {
+    await auth.api.removeUser({
+      body: {
+        userId,
+      },
+      headers: await headers(),
+    });
+    revalidatePath("/dashboard/users");
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw new Error("Failed to delete user");
   }
 }

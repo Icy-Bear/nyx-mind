@@ -1,37 +1,160 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Auth Template
+
+A modern, full-featured authentication template built with Next.js 15, featuring user management, admin dashboard, and secure authentication using Better Auth.
+
+## Features
+
+- 🔐 **Authentication**: Email/password authentication with Better Auth
+- 👥 **User Management**: Admin panel for managing users, roles, and permissions
+- 📊 **Dashboard**: Clean admin dashboard with metrics and user overview
+- 🎨 **Modern UI**: Built with Tailwind CSS and Radix UI components
+- 🗄️ **Database**: PostgreSQL with Drizzle ORM
+- 🔒 **Security**: Session management, user banning, and admin controls
+- 📱 **Responsive**: Mobile-friendly design
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Authentication**: Better Auth
+- **Database**: PostgreSQL with Drizzle ORM
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI
+- **Icons**: Tabler Icons & Lucide React
+- **State Management**: Zustand
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- PostgreSQL database
+- pnpm, npm, or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd nextjs-auth-template
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+pnpm install
+# or
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env` with your database URL and API settings:
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/auth_template_db"
+NEXT_PUBLIC_API_URL="http://localhost:3000"
+```
 
-## Learn More
+4. Set up the database:
+```bash
+# Generate and run migrations
+pnpm drizzle-kit generate
+pnpm drizzle-kit migrate
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. Start the development server:
+```bash
+pnpm dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+├── app/                    # Next.js app directory
+│   ├── api/auth/          # Authentication API routes
+│   ├── auth/              # Login/signup pages
+│   ├── dashboard/         # Protected dashboard pages
+│   └── layout.tsx         # Root layout
+├── components/            # Reusable UI components
+│   ├── ui/               # Base UI components (Radix)
+│   └── admin/            # Admin-specific components
+├── db/                    # Database configuration
+│   ├── schema.ts         # Drizzle schema
+│   └── drizzle.ts        # Database connection
+├── lib/                   # Utility libraries
+│   ├── auth.ts           # Better Auth configuration
+│   └── auth-client.ts    # Auth client setup
+└── actions/              # Server actions
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authentication Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# nyxMind
+- User registration and login
+- Session management (30-day expiry)
+- Admin role system
+- User banning/unbanning
+- Password-based authentication
+- Secure API routes
+
+## Customization
+
+### Branding
+- Update `app/layout.tsx` for site metadata
+- Replace logo in `public/` directory
+- Modify colors in `globals.css`
+
+### Database Schema
+- Edit `db/schema.ts` to add custom fields
+- Run migrations after schema changes
+
+### UI Components
+- All components are in `components/ui/`
+- Customize themes in `tailwind.config.js`
+
+## Scripts
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm start` - Start production server
+- `pnpm lint` - Run ESLint
+
+## Database Commands
+
+```bash
+# Generate migrations
+pnpm drizzle-kit generate
+
+# Run migrations
+pnpm drizzle-kit migrate
+
+# View database
+pnpm drizzle-kit studio
+```
+
+## Deployment
+
+### Vercel
+1. Connect your repository to Vercel
+2. Add environment variables in Vercel dashboard
+3. Deploy
+
+### Other Platforms
+Ensure your deployment platform supports:
+- Node.js 18+
+- PostgreSQL database
+- Environment variables setup
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - feel free to use this template for your projects!
