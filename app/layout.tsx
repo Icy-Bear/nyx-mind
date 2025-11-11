@@ -15,9 +15,9 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Auth Template",
+  title: "NyxMinds",
   description:
-    "A modern Next.js authentication template with admin dashboard, user management, and secure authentication using Better Auth.",
+    "NyxMinds dashboard with admin panel, user management, and secure authentication.",
 };
 
 export default function RootLayout({

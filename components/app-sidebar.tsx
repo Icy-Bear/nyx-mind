@@ -36,11 +36,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/dashboard",
         icon: IconDashboard,
       },
-      {
+      ...(data?.user?.role === "admin" ? [{
         title: "Users",
         url: "/dashboard/users",
         icon: IconUser,
-      },
+      }] : []),
     ],
     navSecondary: [
       {
@@ -72,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <span className="text-base font-semibold">Auth Template</span>
+                <span className="text-base font-semibold">NyxMinds</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

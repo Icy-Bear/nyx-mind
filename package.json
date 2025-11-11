@@ -1,8 +1,8 @@
 {
-  "name": "nextjs-auth-template",
+  "name": "nyx-minds",
   "version": "0.1.0",
   "private": true,
-  "description": "A Next.js authentication template with admin dashboard, user management, and better-auth integration",
+  "description": "NyxMinds dashboard application with admin panel, user management, and secure authentication",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",

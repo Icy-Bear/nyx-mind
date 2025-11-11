@@ -3,16 +3,22 @@ import { AddUser } from "@/components/admin/AddUser";
 import UserList from "@/components/admin/UserList";
 import { auth } from "@/lib/auth";
 import { Users } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 import { headers } from "next/headers";
 
 export default async function UsersPage() {
-  const users = await getAllUsers();
   const session = await auth.api.getSession({
     headers: await headers(), // you need to pass the headers object.
   });
+
+  if (!session || session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  const users = await getAllUsers();
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">

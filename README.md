@@ -1,6 +1,6 @@
-# Next.js Auth Template
+# NyxMinds Dashboard
 
-A modern, full-featured authentication template built with Next.js 15, featuring user management, admin dashboard, and secure authentication using Better Auth.
+A modern, full-featured dashboard application built with Next.js 15, featuring user management, admin panel, and secure authentication using Better Auth.
 
 ## Features
 
@@ -35,7 +35,7 @@ A modern, full-featured authentication template built with Next.js 15, featuring
 1. Clone the repository:
 ```bash
 git clone <your-repo-url>
-cd nextjs-auth-template
+cd nyx-minds
 ```
 
 2. Install dependencies:
@@ -52,7 +52,7 @@ cp .env.example .env
 
 Edit `.env` with your database URL and API settings:
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/auth_template_db"
+DATABASE_URL="postgresql://username:password@localhost:5432/nyx_minds_db"
 NEXT_PUBLIC_API_URL="http://localhost:3000"
 ```
 
@@ -102,7 +102,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 ## Customization
 
 ### Branding
-- Update `app/layout.tsx` for site metadata
+- Update `app/layout.tsx` for site metadata (already configured for NyxMinds)
 - Replace logo in `public/` directory
 - Modify colors in `globals.css`
 
