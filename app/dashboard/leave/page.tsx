@@ -5,8 +5,9 @@ import LeaveBalance from "@/components/LeaveBalance";
 import ApplyLeaveForm from "@/components/ApplyLeaveForm";
 import LeaveHistory from "@/components/LeaveHistory";
 import LeaveApproval from "@/components/admin/LeaveApproval";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, Clock, AlertCircle } from "lucide-react";
 
 export default async function LeavePage() {
   const session = await auth.api.getSession({
@@ -32,12 +33,20 @@ export default async function LeavePage() {
     }));
 
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Leave Management</h1>
-          <p className="text-muted-foreground">
-            Review and manage employee leave requests
-          </p>
+      <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Leave Management</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Review and manage employee leave requests
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4" />
+            <span>{formattedRequests.length} pending requests</span>
+          </div>
         </div>
 
         <LeaveApproval requests={formattedRequests} />
@@ -59,26 +68,51 @@ export default async function LeavePage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">My Leave</h1>
-        <p className="text-muted-foreground">
-          Manage your leave requests and view your balance
-        </p>
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+        <div>
+          <h1 className="text-2xl font-bold">My Leave</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Manage your leave requests and view your balance
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>{formattedHistory.length} total requests</span>
+        </div>
       </div>
 
-      <LeaveBalance balance={balance} />
+      {/* Leave Balance Cards */}
+      <div className="mb-6 sm:mb-8">
+        <LeaveBalance balance={balance} />
+      </div>
 
-      <Tabs defaultValue="apply" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="apply">Apply for Leave</TabsTrigger>
-          <TabsTrigger value="history">Leave History</TabsTrigger>
+      {/* Main Content */}
+      <Tabs defaultValue="apply" className="w-full max-w-6xl mx-auto">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="apply" className="text-xs sm:text-sm">
+            <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline" />
+            Apply for Leave
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs sm:text-sm">
+            <Clock className="h-4 w-4 sm:mr-2 hidden sm:inline" />
+            Leave History
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="apply">
+        <TabsContent value="apply" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Submit Leave Request</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Submit Leave Request
+              </CardTitle>
+              <CardDescription>
+                Fill out the form below to apply for leave. Your request will be
+                reviewed by your manager.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ApplyLeaveForm />
@@ -86,7 +120,7 @@ export default async function LeavePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="space-y-6">
           <LeaveHistory requests={formattedHistory} />
         </TabsContent>
       </Tabs>
