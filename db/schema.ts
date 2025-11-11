@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, boolean, integer, date } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  integer,
+  date,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -66,7 +74,7 @@ export const verification = pgTable("verification", {
 });
 
 export const leaveBalances = pgTable("leave_balances", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -82,7 +90,7 @@ export const leaveBalances = pgTable("leave_balances", {
 });
 
 export const leaveRequests = pgTable("leave_requests", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),

@@ -54,7 +54,8 @@ async function updateLeaveAccruals(userId: string) {
   );
 
   if (quartersSinceLastAccrual > 0) {
-    const newClBalance = currentBalance.clBalance + (quartersSinceLastAccrual * 2);
+    const newClBalance =
+      currentBalance.clBalance + quartersSinceLastAccrual * 2;
     await db
       .update(leaveBalances)
       .set({
@@ -71,7 +72,7 @@ async function updateLeaveAccruals(userId: string) {
   const yearsSinceLastAccrual = now.getFullYear() - lastMlAccrual.getFullYear();
 
   if (yearsSinceLastAccrual > 0) {
-    const newMlBalance = currentBalance.mlBalance + (yearsSinceLastAccrual * 12);
+    const newMlBalance = currentBalance.mlBalance + yearsSinceLastAccrual * 12;
     await db
       .update(leaveBalances)
       .set({
@@ -168,10 +169,13 @@ export async function applyLeave(data: {
 
     // Check balance
     const balance = await getLeaveBalance(userId);
-    const requiredBalance = data.leaveType === "CL" ? balance.clBalance : balance.mlBalance;
+    const requiredBalance =
+      data.leaveType === "CL" ? balance.clBalance : balance.mlBalance;
 
     if (requiredBalance < totalDays) {
-      throw new Error(`Insufficient ${data.leaveType} balance. Available: ${requiredBalance}, Required: ${totalDays}`);
+      throw new Error(
+        `Insufficient ${data.leaveType} balance. Available: ${requiredBalance}, Required: ${totalDays}`
+      );
     }
 
     // Create request
@@ -228,7 +232,8 @@ export async function approveLeave(requestId: string) {
 
     // Check balance again (in case it changed)
     const balance = await getLeaveBalance(leaveRequest.userId);
-    const currentBalance = leaveRequest.leaveType === "CL" ? balance.clBalance : balance.mlBalance;
+    const currentBalance =
+      leaveRequest.leaveType === "CL" ? balance.clBalance : balance.mlBalance;
 
     if (currentBalance < leaveRequest.totalDays) {
       throw new Error("Insufficient balance to approve this request");
