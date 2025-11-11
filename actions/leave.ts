@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { leaveBalances, leaveRequests, user } from "@/db/schema";
+import { leaveBalances, leaveRequests, user, InsertLeaveRequest } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -180,11 +180,10 @@ export async function applyLeave(data: {
 
     // Create request
     await db.insert(leaveRequests).values({
-      id: crypto.randomUUID(),
       userId,
       leaveType: data.leaveType,
-      fromDate: data.fromDate,
-      toDate: data.toDate,
+      fromDate: data.fromDate.toISOString().split('T')[0], // YYYY-MM-DD
+      toDate: data.toDate.toISOString().split('T')[0],
       totalDays,
       reason: data.reason,
     });

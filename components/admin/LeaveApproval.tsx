@@ -12,7 +12,6 @@ import {
   XCircle,
   Calendar,
   AlertCircle,
-  User,
   Clock,
   FileText,
   Mail,

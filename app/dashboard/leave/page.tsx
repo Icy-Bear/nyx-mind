@@ -5,9 +5,7 @@ import LeaveBalance from "@/components/LeaveBalance";
 import LeaveHistory from "@/components/LeaveHistory";
 import LeaveApproval from "@/components/admin/LeaveApproval";
 import ApplyLeaveDialog from "@/components/ApplyLeaveDialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, AlertCircle } from "lucide-react";
+import { Calendar, AlertCircle } from "lucide-react";
 
 export default async function LeavePage() {
   const session = await auth.api.getSession({

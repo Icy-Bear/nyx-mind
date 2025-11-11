@@ -112,6 +112,8 @@ export type SelectUser = typeof user.$inferSelect;
 export type SelectLeaveBalance = typeof leaveBalances.$inferSelect;
 export type SelectLeaveRequest = typeof leaveRequests.$inferSelect;
 
+export type InsertLeaveRequest = typeof leaveRequests.$inferInsert;
+
 export const schema = {
   user,
   session,
