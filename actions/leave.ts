@@ -1,11 +1,17 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { leaveBalances, leaveRequests, user, InsertLeaveRequest } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import {
+  leaveBalances,
+  leaveRequests,
+  user,
+  InsertLeaveRequest,
+} from "@/db/schema";
+import { eq, desc, sql, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { LEAVE_CONSTANTS } from "@/lib/leave-constants";
 
 // Helper function to calculate working days between two dates
 function calculateWorkingDays(fromDate: Date, toDate: Date): number {
@@ -24,6 +30,30 @@ function calculateWorkingDays(fromDate: Date, toDate: Date): number {
   return workingDays;
 }
 
+// Helper function to calculate total used CL days
+async function getTotalUsedClDays(userId: string): Promise<number> {
+  const result = await db
+    .select({ total: sql<number>`sum(${leaveRequests.totalDays})` })
+    .from(leaveRequests)
+    .where(and(
+      eq(leaveRequests.userId, userId),
+      eq(leaveRequests.leaveType, "CL"),
+      eq(leaveRequests.status, "Approved")
+    ));
+
+  return result[0]?.total || 0;
+}
+
+// Helper function to calculate CL balance based on continuous accrual
+async function calculateClBalance(userCreatedAt: Date, usedClDays: number): Promise<number> {
+  const daysSinceCreation = Math.floor((new Date().getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+  const totalAccrued = daysSinceCreation * LEAVE_CONSTANTS.CL_ACCRUAL_RATE_PER_DAY;
+  const currentBalance = Math.max(0, totalAccrued - usedClDays);
+
+  // Round to 2 decimal places
+  return Math.round(currentBalance * 100) / 100;
+}
+
 // Helper function to check and update leave balances for accruals
 async function updateLeaveAccruals(userId: string) {
   const balance = await db
@@ -37,7 +67,7 @@ async function updateLeaveAccruals(userId: string) {
     await db.insert(leaveBalances).values({
       id: crypto.randomUUID(),
       userId,
-      clBalance: 2, // Initial CL
+      clBalance: "0", // Start with 0, accrues continuously
       mlBalance: 12, // Initial ML
     });
     return;
@@ -47,25 +77,7 @@ async function updateLeaveAccruals(userId: string) {
   const now = new Date();
   let updated = false;
 
-  // Check CL accrual (quarterly)
-  const lastClAccrual = new Date(currentBalance.lastClAccrual);
-  const quartersSinceLastAccrual = Math.floor(
-    (now.getTime() - lastClAccrual.getTime()) / (1000 * 60 * 60 * 24 * 91) // ~91 days per quarter
-  );
-
-  if (quartersSinceLastAccrual > 0) {
-    const newClBalance =
-      currentBalance.clBalance + quartersSinceLastAccrual * 2;
-    await db
-      .update(leaveBalances)
-      .set({
-        clBalance: newClBalance,
-        lastClAccrual: now,
-        updatedAt: now,
-      })
-      .where(eq(leaveBalances.userId, userId));
-    updated = true;
-  }
+  // CL is now calculated continuously in getLeaveBalance, no need for accrual here
 
   // Check ML accrual (yearly)
   const lastMlAccrual = new Date(currentBalance.lastMlAccrual);
@@ -91,18 +103,43 @@ async function updateLeaveAccruals(userId: string) {
 
 export async function getLeaveBalance(userId: string) {
   try {
-    await updateLeaveAccruals(userId);
+    // Get user creation date
+    const userData = await db
+      .select({ createdAt: user.createdAt })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (userData.length === 0) {
+      throw new Error("User not found");
+    }
+
+    const usedClDays = await getTotalUsedClDays(userId);
+    const calculatedClBalance = await calculateClBalance(userData[0].createdAt, usedClDays);
+
+    // Update or create balance record
+    await db
+      .insert(leaveBalances)
+      .values({
+        userId,
+        clBalance: calculatedClBalance.toString(),
+        mlBalance: 12, // Keep ML logic as is
+        lastClAccrual: new Date(),
+        lastMlAccrual: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: leaveBalances.userId,
+        set: {
+          clBalance: calculatedClBalance.toString(),
+          updatedAt: new Date(),
+        },
+      });
 
     const balance = await db
       .select()
       .from(leaveBalances)
       .where(eq(leaveBalances.userId, userId))
       .limit(1);
-
-    if (balance.length === 0) {
-      // Should have been created by updateLeaveAccruals
-      throw new Error("Failed to initialize leave balance");
-    }
 
     return balance[0];
   } catch (error) {
@@ -170,11 +207,12 @@ export async function applyLeave(data: {
     // Check balance
     const balance = await getLeaveBalance(userId);
     const requiredBalance =
-      data.leaveType === "CL" ? balance.clBalance : balance.mlBalance;
+      data.leaveType === "CL" ? parseFloat(balance.clBalance.toString()) : balance.mlBalance;
 
     if (requiredBalance < totalDays) {
+      const formattedBalance = data.leaveType === "CL" ? requiredBalance.toFixed(2) : requiredBalance.toString();
       throw new Error(
-        `Insufficient ${data.leaveType} balance. Available: ${requiredBalance}, Required: ${totalDays}`
+        `Insufficient ${data.leaveType} balance. Available: ${formattedBalance}, Required: ${totalDays}`
       );
     }
 
@@ -182,8 +220,8 @@ export async function applyLeave(data: {
     await db.insert(leaveRequests).values({
       userId,
       leaveType: data.leaveType,
-      fromDate: data.fromDate.toISOString().split('T')[0], // YYYY-MM-DD
-      toDate: data.toDate.toISOString().split('T')[0],
+      fromDate: data.fromDate.toISOString().split("T")[0], // YYYY-MM-DD
+      toDate: data.toDate.toISOString().split("T")[0],
       totalDays,
       reason: data.reason,
     });
@@ -232,7 +270,7 @@ export async function approveLeave(requestId: string) {
     // Check balance again (in case it changed)
     const balance = await getLeaveBalance(leaveRequest.userId);
     const currentBalance =
-      leaveRequest.leaveType === "CL" ? balance.clBalance : balance.mlBalance;
+      leaveRequest.leaveType === "CL" ? parseFloat(balance.clBalance.toString()) : balance.mlBalance;
 
     if (currentBalance < leaveRequest.totalDays) {
       throw new Error("Insufficient balance to approve this request");
@@ -253,7 +291,7 @@ export async function approveLeave(requestId: string) {
     if (leaveRequest.leaveType === "CL") {
       await db
         .update(leaveBalances)
-        .set({ clBalance: newBalance, updatedAt: new Date() })
+        .set({ clBalance: (Math.round(newBalance * 100) / 100).toString(), updatedAt: new Date() })
         .where(eq(leaveBalances.userId, leaveRequest.userId));
     } else {
       await db
@@ -339,5 +377,24 @@ export async function getPendingLeaveRequests() {
   } catch (error) {
     console.error("Error fetching pending requests:", error);
     throw new Error("Failed to fetch pending requests");
+  }
+}
+
+export async function recalculateUserClBalance(userId: string) {
+  try {
+    const userData = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+    if (!userData.length) return;
+
+    const usedClDays = await getTotalUsedClDays(userId);
+    const newBalance = await calculateClBalance(userData[0].createdAt, usedClDays);
+
+    await db.update(leaveBalances)
+      .set({ clBalance: newBalance.toString(), updatedAt: new Date() })
+      .where(eq(leaveBalances.userId, userId));
+
+    revalidatePath("/dashboard/leave");
+  } catch (error) {
+    console.error("Error recalculating CL balance:", error);
+    throw new Error("Failed to recalculate CL balance");
   }
 }

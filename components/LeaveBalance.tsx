@@ -25,14 +25,14 @@ export function LeaveBalance({ balance }: LeaveBalanceProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold">{balance.clBalance}</div>
+            <div className="text-2xl sm:text-3xl font-bold">{parseFloat(balance.clBalance.toString()).toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Available days
             </p>
             <div className="mt-2 h-1 bg-blue-100 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((balance.clBalance / 12) * 100, 100)}%` }}
+                style={{ width: `${Math.min((parseFloat(balance.clBalance.toString()) / 12) * 100, 100)}%` }}
               />
             </div>
           </CardContent>

@@ -4,6 +4,7 @@ import {
   timestamp,
   boolean,
   integer,
+  decimal,
   date,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -77,8 +78,11 @@ export const leaveBalances = pgTable("leave_balances", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  clBalance: integer("cl_balance").default(0).notNull(),
+    .references(() => user.id, { onDelete: "cascade" })
+    .unique(),
+  clBalance: decimal("cl_balance", { precision: 10, scale: 2 })
+    .default("0")
+    .notNull(),
   mlBalance: integer("ml_balance").default(0).notNull(),
   lastClAccrual: timestamp("last_cl_accrual").defaultNow().notNull(),
   lastMlAccrual: timestamp("last_ml_accrual").defaultNow().notNull(),
