@@ -6,7 +6,6 @@ import { CalendarPlus } from "lucide-react";
 import { ActionDialog } from "@/components/action-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { DialogContent } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
   FormField,
@@ -15,9 +14,19 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -44,10 +53,13 @@ const applyLeaveSchema = z
     message: "From date cannot be after to date",
     path: ["fromDate"],
   })
-  .refine((data) => data.fromDate >= new Date(new Date().setHours(0, 0, 0, 0)), {
-    message: "From date cannot be in the past",
-    path: ["fromDate"],
-  });
+  .refine(
+    (data) => data.fromDate >= new Date(new Date().setHours(0, 0, 0, 0)),
+    {
+      message: "From date cannot be in the past",
+      path: ["fromDate"],
+    }
+  );
 
 type ApplyLeave = z.infer<typeof applyLeaveSchema>;
 

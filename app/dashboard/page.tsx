@@ -1,7 +1,6 @@
 "use client";
 
 import { ActionDialog } from "@/components/action-dialog";
-import { HeaderLeaveDialog } from "@/components/HeaderLeaveDialog";
 import { ProjectCards } from "@/components/dashboard/project-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderKanban, Plus } from "lucide-react";

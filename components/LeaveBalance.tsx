@@ -1,9 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SelectLeaveBalance } from "@/db/schema/leave-schema";
 
 import { Calendar, Heart } from "lucide-react";
-import { SelectLeaveBalance } from "@/db/schema/auth-schema";
 
 interface LeaveBalanceProps {
   balance: SelectLeaveBalance;
