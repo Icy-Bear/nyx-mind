@@ -1,4 +1,7 @@
+"use client";
+
 import { ActionDialog } from "@/components/action-dialog";
+import { HeaderLeaveDialog } from "@/components/HeaderLeaveDialog";
 import { ProjectCards } from "@/components/dashboard/project-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderKanban, Plus } from "lucide-react";
@@ -23,29 +26,31 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Add Project Button (ActionDialog) */}
-          <ActionDialog
-            title="Create New Project"
-            description="Add a new project to your dashboard."
-            label="Add Project"
-            icon={<Plus className="h-4 w-4" />}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            {/* Form or content inside dialog */}
-            <form className="flex flex-col gap-3">
-              <input
-                type="text"
-                placeholder="Project name"
-                className="border rounded-md p-2"
-              />
-              <button
-                className="bg-primary text-white px-3 py-2 rounded-md"
-                type="submit"
-              >
-                Create
-              </button>
-            </form>
-          </ActionDialog>
+          {/* Right side actions: Add Project and Apply Leave in header */}
+          <div className="flex items-center gap-2">
+            <ActionDialog
+              title="Create New Project"
+              description="Add a new project to your dashboard."
+              label="Add Project"
+              icon={<Plus className="h-4 w-4" />}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {/* Form or content inside dialog */}
+              <form className="flex flex-col gap-3">
+                <input
+                  type="text"
+                  placeholder="Project name"
+                  className="border rounded-md p-2"
+                />
+                <button
+                  className="bg-primary text-white px-3 py-2 rounded-md"
+                  type="submit"
+                >
+                  Create
+                </button>
+              </form>
+            </ActionDialog>
+          </div>
         </div>
 
         {/* Stats Info Bar */}
