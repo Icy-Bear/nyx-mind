@@ -31,7 +31,7 @@ import {
   Grid,
   List,
 } from "lucide-react";
-import { SelectUser } from "@/db/schema";
+import { SelectUser } from "@/db/schema/auth-schema";
 import { deleteUser } from "@/actions/users";
 import { toast } from "sonner";
 
@@ -221,11 +221,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
-                      variant={
-                        user.role === "admin"
-                          ? "default"
-                          : "secondary"
-                      }
+                      variant={user.role === "admin" ? "default" : "secondary"}
                       className="text-xs"
                     >
                       <Shield className="h-3 w-3 mr-1" />
@@ -300,11 +296,9 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <Badge
-                        variant={
-                          user.role === "admin"
-                            ? "default"
-                            : "secondary"
-                        }
+                          variant={
+                            user.role === "admin" ? "default" : "secondary"
+                          }
                           className="text-xs"
                         >
                           <Shield className="h-3 w-3 mr-1" />

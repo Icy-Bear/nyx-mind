@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Calendar, Heart } from "lucide-react";
-import { SelectLeaveBalance } from "@/db/schema";
+import { SelectLeaveBalance } from "@/db/schema/auth-schema";
 
 interface LeaveBalanceProps {
   balance: SelectLeaveBalance;
@@ -11,7 +11,7 @@ interface LeaveBalanceProps {
 
 export function LeaveBalance({ balance }: LeaveBalanceProps) {
   const totalBalance = balance.clBalance + balance.mlBalance;
-  
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Mobile Stacked Layout */}
@@ -25,14 +25,19 @@ export function LeaveBalance({ balance }: LeaveBalanceProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold">{parseFloat(balance.clBalance.toString()).toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              Available days
-            </p>
+            <div className="text-2xl sm:text-3xl font-bold">
+              {parseFloat(balance.clBalance.toString()).toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">Available days</p>
             <div className="mt-2 h-1 bg-blue-100 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((parseFloat(balance.clBalance.toString()) / 12) * 100, 100)}%` }}
+                style={{
+                  width: `${Math.min(
+                    (parseFloat(balance.clBalance.toString()) / 12) * 100,
+                    100
+                  )}%`,
+                }}
               />
             </div>
           </CardContent>
@@ -47,14 +52,16 @@ export function LeaveBalance({ balance }: LeaveBalanceProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold">{balance.mlBalance}</div>
-            <p className="text-xs text-muted-foreground">
-              Available days
-            </p>
+            <div className="text-2xl sm:text-3xl font-bold">
+              {balance.mlBalance}
+            </div>
+            <p className="text-xs text-muted-foreground">Available days</p>
             <div className="mt-2 h-1 bg-red-100 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-red-600 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((balance.mlBalance / 12) * 100, 100)}%` }}
+                style={{
+                  width: `${Math.min((balance.mlBalance / 12) * 100, 100)}%`,
+                }}
               />
             </div>
           </CardContent>
@@ -69,7 +76,9 @@ export function LeaveBalance({ balance }: LeaveBalanceProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-primary">{totalBalance}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-primary">
+              {totalBalance}
+            </div>
             <p className="text-xs text-muted-foreground">
               Total available days
             </p>
@@ -94,7 +103,9 @@ export function LeaveBalance({ balance }: LeaveBalanceProps) {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-primary">{totalBalance}</div>
+              <div className="text-2xl font-bold text-primary">
+                {totalBalance}
+              </div>
               <div className="text-xs text-muted-foreground">days</div>
             </div>
           </div>
