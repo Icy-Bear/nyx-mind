@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 export async function createProject(data: {
   projectName: string;
   summary?: string;
+  status?: string;
   plannedStart?: Date;
   plannedEnd?: Date;
 }) {
@@ -29,6 +30,7 @@ export async function createProject(data: {
       id: projectId,
       projectName: data.projectName,
       summary: data.summary,
+      status: data.status || "not_started",
       plannedStart: data.plannedStart,
       plannedEnd: data.plannedEnd,
     });
@@ -67,6 +69,7 @@ export async function getProjects(userId?: string) {
           id: projects.id,
           projectName: projects.projectName,
           summary: projects.summary,
+          status: projects.status,
           plannedStart: projects.plannedStart,
           plannedEnd: projects.plannedEnd,
           percentComplete: projects.percentComplete,
@@ -80,6 +83,7 @@ export async function getProjects(userId?: string) {
           id: projects.id,
           projectName: projects.projectName,
           summary: projects.summary,
+          status: projects.status,
           plannedStart: projects.plannedStart,
           plannedEnd: projects.plannedEnd,
           percentComplete: projects.percentComplete,

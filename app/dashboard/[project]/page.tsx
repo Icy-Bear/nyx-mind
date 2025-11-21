@@ -25,6 +25,8 @@ interface Props {
 interface Project {
   id: string;
   projectName: string;
+  summary: string | null;
+  status: string | null;
   plannedStart: Date | null;
   plannedEnd: Date | null;
   percentComplete: string | null;
@@ -169,22 +171,25 @@ export default function ProjectPage() {
 
         {/* Project Info Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Status</CardTitle>
-              <Badge variant="secondary">
-                {project.percentComplete
-                  ? `${project.percentComplete}%`
-                  : "Not Started"}
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {project.percentComplete || 0}%
-              </div>
-              <p className="text-xs text-muted-foreground">Complete</p>
-            </CardContent>
-          </Card>
+           <Card>
+             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+               <CardTitle className="text-sm font-medium">Status</CardTitle>
+               <Badge variant="secondary">
+                 {project.status === "not_started" ? "Not Started" :
+                  project.status === "in_progress" ? "In Progress" :
+                  project.status === "on_hold" ? "On Hold" :
+                  project.status === "completed" ? "Completed" :
+                  project.status === "cancelled" ? "Cancelled" :
+                  "Not Started"}
+               </Badge>
+             </CardHeader>
+             <CardContent>
+               <div className="text-2xl font-bold">
+                 {project.percentComplete || 0}%
+               </div>
+               <p className="text-xs text-muted-foreground">Complete</p>
+             </CardContent>
+           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

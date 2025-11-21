@@ -26,6 +26,7 @@ export const projects = pgTable("projects", {
 
   projectName: varchar("project_name", { length: 255 }).notNull(),
   summary: text("summary"),
+  status: projectStatusEnum("status").default("not_started"),
 
   plannedStart: timestamp("planned_start"),
   plannedEnd: timestamp("planned_end"),
@@ -41,8 +42,6 @@ export const projects = pgTable("projects", {
   }).default("0"),
 
   predecessorLag: integer("predecessor_lag"),
-
-  status: projectStatusEnum("status").default("not_started").notNull(),
 
   createdAt: timestamp("created_at").defaultNow(),
 });

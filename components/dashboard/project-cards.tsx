@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { FolderOpen } from "lucide-react";
 
 interface ProjectCardsProps {
-  projects: { id: string; name: string; summary?: string | null }[];
+  projects: { id: string; name: string; summary?: string | null; status?: string | null }[];
 }
 
 export function ProjectCards({ projects }: ProjectCardsProps) {
@@ -28,7 +28,12 @@ export function ProjectCards({ projects }: ProjectCardsProps) {
                 <CardTitle className="capitalize text-lg">{p.name}</CardTitle>
               </div>
               <Badge variant="secondary" className="text-xs">
-                Active
+                {p.status === "not_started" ? "Not Started" :
+                 p.status === "in_progress" ? "In Progress" :
+                 p.status === "on_hold" ? "On Hold" :
+                 p.status === "completed" ? "Completed" :
+                 p.status === "cancelled" ? "Cancelled" :
+                 "Not Started"}
               </Badge>
             </div>
           </CardHeader>

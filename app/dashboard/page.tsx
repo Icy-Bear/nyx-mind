@@ -15,6 +15,7 @@ interface Project {
   id: string;
   projectName: string;
   summary: string | null;
+  status: string | null;
   plannedStart: Date | null;
   plannedEnd: Date | null;
   percentComplete: string | null;
@@ -91,6 +92,7 @@ export default function DashboardPage() {
             id: p.id,
             name: p.projectName,
             summary: p.summary,
+            status: p.status,
           }))}
         />
       </div>
