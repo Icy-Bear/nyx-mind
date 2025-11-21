@@ -10,9 +10,9 @@ import { headers } from "next/headers";
 
 export async function createProject(data: {
   projectName: string;
+  summary?: string;
   plannedStart?: Date;
   plannedEnd?: Date;
-  description?: string;
 }) {
   try {
     const session = await auth.api.getSession({
@@ -28,9 +28,9 @@ export async function createProject(data: {
     await db.insert(projects).values({
       id: projectId,
       projectName: data.projectName,
+      summary: data.summary,
       plannedStart: data.plannedStart,
       plannedEnd: data.plannedEnd,
-      // Add description as a comment or extend schema if needed
     });
 
     revalidatePath("/dashboard");
@@ -66,6 +66,7 @@ export async function getProjects(userId?: string) {
         .select({
           id: projects.id,
           projectName: projects.projectName,
+          summary: projects.summary,
           plannedStart: projects.plannedStart,
           plannedEnd: projects.plannedEnd,
           percentComplete: projects.percentComplete,
@@ -78,6 +79,7 @@ export async function getProjects(userId?: string) {
         .select({
           id: projects.id,
           projectName: projects.projectName,
+          summary: projects.summary,
           plannedStart: projects.plannedStart,
           plannedEnd: projects.plannedEnd,
           percentComplete: projects.percentComplete,

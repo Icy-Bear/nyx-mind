@@ -8,6 +8,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   createProject,
   getAllUsers,
@@ -38,6 +39,7 @@ interface User {
 export default function CreateProjectForm() {
   const [isPending, setIsPending] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [summary, setSummary] = useState("");
   const [plannedStart, setPlannedStart] = useState<Date>();
   const [plannedEnd, setPlannedEnd] = useState<Date>();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -119,6 +121,17 @@ export default function CreateProjectForm() {
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="Enter project name"
             required
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="summary">Summary</FieldLabel>
+          <Textarea
+            id="summary"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="Brief description of the project"
+            rows={3}
           />
         </Field>
 

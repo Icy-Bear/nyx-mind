@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 interface Project {
   id: string;
   projectName: string;
+  summary: string | null;
   plannedStart: Date | null;
   plannedEnd: Date | null;
   percentComplete: string | null;
@@ -86,7 +87,11 @@ export default function DashboardPage() {
 
       <div>
         <ProjectCards
-          projects={projects.map((p) => ({ id: p.id, name: p.projectName }))}
+          projects={projects.map((p) => ({
+            id: p.id,
+            name: p.projectName,
+            summary: p.summary,
+          }))}
         />
       </div>
     </div>
@@ -110,20 +115,6 @@ function ProjectStatics({ projects }: { projects: Project[] }) {
           <CardTitle>Active</CardTitle>
         </CardHeader>
         <CardContent className="text-3xl font-bold">2</CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Last Updated</CardTitle>
-        </CardHeader>
-        <CardContent className="text-lg font-semibold">Today</CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Pending Tasks</CardTitle>
-        </CardHeader>
-        <CardContent className="text-3xl font-bold">7</CardContent>
       </Card>
     </div>
   );

@@ -11,6 +11,16 @@ import {
 
 import { user } from "./auth-schema";
 
+import { pgEnum } from "drizzle-orm/pg-core";
+
+export const projectStatusEnum = pgEnum("project_status", [
+  "not_started",
+  "in_progress",
+  "on_hold",
+  "completed",
+  "cancelled",
+]);
+
 export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
 
@@ -31,6 +41,8 @@ export const projects = pgTable("projects", {
   }).default("0"),
 
   predecessorLag: integer("predecessor_lag"),
+
+  status: projectStatusEnum("status").default("not_started").notNull(),
 
   createdAt: timestamp("created_at").defaultNow(),
 });
