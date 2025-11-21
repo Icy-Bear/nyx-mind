@@ -4,19 +4,50 @@ import { ActionDialog } from "@/components/action-dialog";
 import { ProjectCards } from "@/components/dashboard/project-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderKanban, Plus } from "lucide-react";
+import { getProjects } from "@/actions/projects";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import CreateProjectForm from "./create/page";
+import { useSession } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
+
+interface Project {
+  id: string;
+  projectName: string;
+  plannedStart: Date | null;
+  plannedEnd: Date | null;
+  percentComplete: string | null;
+  createdAt: Date | null;
+}
 
 export default function DashboardPage() {
-  const projects = [
-    { name: "nivaas" },
-    { name: "mithaya-darpan" },
-    { name: "chat-app" },
-  ];
+  const [projects, setProjects] = useState<Project[]>([]);
+  const { data, isPending } = useSession();
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const fetchedProjects = await getProjects();
+        setProjects(fetchedProjects);
+      } catch (error) {
+        toast.error("Failed to load projects");
+      }
+    };
+
+    loadProjects();
+  }, []);
+
+  if (isPending) {
+    return (
+      <div className="flex h-screen justify-center items-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-3 sm:p-6 lg:p-8">
-      {/* ---------------- Header ---------------- */}
       <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* TOP ROW: Title + Action Button */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">Projects</h1>
@@ -25,8 +56,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Right side actions: Add Project and Apply Leave in header */}
-          <div className="flex items-center gap-2">
+          {data?.user.role === "admin" && (
             <ActionDialog
               title="Create New Project"
               description="Add a new project to your dashboard."
@@ -34,25 +64,11 @@ export default function DashboardPage() {
               icon={<Plus className="h-4 w-4" />}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {/* Form or content inside dialog */}
-              <form className="flex flex-col gap-3">
-                <input
-                  type="text"
-                  placeholder="Project name"
-                  className="border rounded-md p-2"
-                />
-                <button
-                  className="bg-primary text-white px-3 py-2 rounded-md"
-                  type="submit"
-                >
-                  Create
-                </button>
-              </form>
+              <CreateProjectForm />
             </ActionDialog>
-          </div>
+          )}
         </div>
 
-        {/* Stats Info Bar */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
           <FolderKanban className="h-4 w-4 flex-shrink-0" />
           <span>
@@ -62,43 +78,53 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ---------------- Project Statistics ---------------- */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Projects</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">
-            {projects.length}
-          </CardContent>
-        </Card>
+      {data?.user.role === "admin" ? (
+        <ProjectStatics projects={projects} />
+      ) : (
+        <></>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Active</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">2</CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Last Updated</CardTitle>
-          </CardHeader>
-          <CardContent className="text-lg font-semibold">Today</CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Tasks</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">7</CardContent>
-        </Card>
-      </div>
-
-      {/* ---------------- Projects Cards ---------------- */}
       <div>
-        <ProjectCards projects={projects} />
+        <ProjectCards
+          projects={projects.map((p) => ({ id: p.id, name: p.projectName }))}
+        />
       </div>
+    </div>
+  );
+}
+
+function ProjectStatics({ projects }: { projects: Project[] }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Projects</CardTitle>
+        </CardHeader>
+        <CardContent className="text-3xl font-bold">
+          {projects.length}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Active</CardTitle>
+        </CardHeader>
+        <CardContent className="text-3xl font-bold">2</CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Last Updated</CardTitle>
+        </CardHeader>
+        <CardContent className="text-lg font-semibold">Today</CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending Tasks</CardTitle>
+        </CardHeader>
+        <CardContent className="text-3xl font-bold">7</CardContent>
+      </Card>
     </div>
   );
 }

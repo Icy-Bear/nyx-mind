@@ -15,6 +15,7 @@ export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
 
   projectName: varchar("project_name", { length: 255 }).notNull(),
+  summary: text("summary"),
 
   plannedStart: timestamp("planned_start"),
   plannedEnd: timestamp("planned_end"),
