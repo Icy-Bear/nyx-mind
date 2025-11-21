@@ -10,17 +10,7 @@ import { toast } from "sonner";
 import CreateProjectForm from "./create/page";
 import { useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
-
-interface Project {
-  id: string;
-  projectName: string;
-  summary: string | null;
-  status: string | null;
-  plannedStart: Date | null;
-  plannedEnd: Date | null;
-  percentComplete: string | null;
-  createdAt: Date | null;
-}
+import { Project } from "@/lib/types";
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -86,16 +76,9 @@ export default function DashboardPage() {
         <></>
       )}
 
-      <div>
-        <ProjectCards
-          projects={projects.map((p) => ({
-            id: p.id,
-            name: p.projectName,
-            summary: p.summary,
-            status: p.status,
-          }))}
-        />
-      </div>
+       <div>
+         <ProjectCards projects={projects} />
+       </div>
     </div>
   );
 }

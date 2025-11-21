@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { projects, projectAssignees } from "@/db/schema/project-schema";
+import { projects, projectAssignees, projectStatusEnum } from "@/db/schema/project-schema";
 import { user } from "@/db/schema/auth-schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -11,7 +11,7 @@ import { headers } from "next/headers";
 export async function createProject(data: {
   projectName: string;
   summary?: string;
-  status?: string;
+  status?: typeof projectStatusEnum.enumValues[number];
   plannedStart?: Date;
   plannedEnd?: Date;
 }) {
@@ -37,7 +37,7 @@ export async function createProject(data: {
 
     revalidatePath("/dashboard");
 
-    return { success: true, projectId };
+    return { success: true };
   } catch (error) {
     console.error("Error creating project:", error);
     if (error instanceof Error) {

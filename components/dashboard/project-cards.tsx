@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen } from "lucide-react";
+import { Project } from "@/lib/types";
 
 interface ProjectCardsProps {
-  projects: { id: string; name: string; summary?: string | null; status?: string | null }[];
+  projects: Project[];
 }
 
 export function ProjectCards({ projects }: ProjectCardsProps) {
@@ -25,7 +26,7 @@ export function ProjectCards({ projects }: ProjectCardsProps) {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
                 <FolderOpen className="h-5 w-5 text-primary" />
-                <CardTitle className="capitalize text-lg">{p.name}</CardTitle>
+                <CardTitle className="capitalize text-lg">{p.projectName}</CardTitle>
               </div>
               <Badge variant="secondary" className="text-xs">
                 {p.status === "not_started" ? "Not Started" :

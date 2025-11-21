@@ -17,37 +17,10 @@ import { format } from "date-fns";
 import { ActionDialog } from "@/components/action-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "next/navigation";
-
-interface Props {
-  params: { project: string };
-}
-
-interface Project {
-  id: string;
-  projectName: string;
-  summary: string | null;
-  status: string | null;
-  plannedStart: Date | null;
-  plannedEnd: Date | null;
-  percentComplete: string | null;
-  createdAt: Date | null;
-  assignees: Array<{
-    id: string;
-    name: string;
-    email: string;
-    role: string | null;
-  }>;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string | null;
-}
+import { ProjectWithAssignees, User } from "@/lib/types";
 
 export default function ProjectPage() {
-  const [project, setProject] = useState<Project | null>(null);
+  const [project, setProject] = useState<ProjectWithAssignees | null>(null);
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
