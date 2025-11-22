@@ -42,6 +42,8 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   Loader2,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
@@ -75,6 +77,9 @@ export function WeeklyReportSheet({
   const [userProjects, setUserProjects] = useState<
     Array<{ id: string; projectName: string }>
   >([]);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
+  const [quickProject, setQuickProject] = useState<string>("none");
 
   // Ensure selected date is not before user's joined date
   useEffect(() => {
@@ -242,6 +247,65 @@ export function WeeklyReportSheet({
 
   const updateDescription = (dayKey: string, text: string) => {
     setDescriptions((prev) => ({ ...prev, [dayKey]: text }));
+  };
+
+  const toggleDaySelection = (dayKey: string) => {
+    setSelectedDays((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(dayKey)) {
+        newSet.delete(dayKey);
+      } else {
+        newSet.add(dayKey);
+      }
+      return newSet;
+    });
+  };
+
+  const applyProjectToSelectedDays = () => {
+    if (selectedDays.size === 0) {
+      toast.error("Please select at least one day");
+      return;
+    }
+
+    selectedDays.forEach((dayKey) => {
+      updateProject(dayKey, quickProject);
+    });
+
+    toast.success(
+      `Applied project to ${selectedDays.size} day${
+        selectedDays.size > 1 ? "s" : ""
+      }`
+    );
+    setSelectedDays(new Set());
+    setBulkMode(false);
+  };
+
+  const selectAllDays = () => {
+    const allDays = new Set(DAYS.map((d) => d.key));
+    setSelectedDays(allDays);
+  };
+
+  const clearSelection = () => {
+    setSelectedDays(new Set());
+  };
+
+  const getProjectColor = (projectId: string) => {
+    if (projectId === "none")
+      return "bg-gray-100 text-gray-700 border-gray-200";
+    const colors = [
+      "bg-blue-100 text-blue-700 border-blue-200",
+      "bg-green-100 text-green-700 border-green-200",
+      "bg-purple-100 text-purple-700 border-purple-200",
+      "bg-orange-100 text-orange-700 border-orange-200",
+      "bg-pink-100 text-pink-700 border-pink-200",
+      "bg-indigo-100 text-indigo-700 border-indigo-200",
+      "bg-teal-100 text-teal-700 border-teal-200",
+      "bg-yellow-100 text-yellow-700 border-yellow-200",
+    ];
+    const index =
+      projectId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+      colors.length;
+    return colors[index];
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -444,6 +508,88 @@ export function WeeklyReportSheet({
               </CardContent>
             </Card>
 
+            {/* QUICK PROJECT SELECTION */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5" /> Quick
+                  Project Assignment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium block mb-2">
+                      Select Project
+                    </label>
+                    <Select
+                      value={quickProject}
+                      onValueChange={setQuickProject}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Choose a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No project</SelectItem>
+                        {userProjects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.projectName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkMode(!bulkMode)}
+                      className={bulkMode ? "bg-blue-50 border-blue-200" : ""}
+                    >
+                      {bulkMode ? (
+                        <CheckSquare className="h-4 w-4 mr-1" />
+                      ) : (
+                        <Square className="h-4 w-4 mr-1" />
+                      )}
+                      {bulkMode ? "Exit Bulk Mode" : "Bulk Select"}
+                    </Button>
+                    {bulkMode && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={selectAllDays}
+                        >
+                          Select All
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearSelection}
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={applyProjectToSelectedDays}
+                          disabled={selectedDays.size === 0}
+                        >
+                          Apply to {selectedDays.size} day
+                          {selectedDays.size !== 1 ? "s" : ""}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {bulkMode && (
+                  <div className="mt-3 text-sm text-muted-foreground">
+                    Click on day cards below to select/deselect them, then apply
+                    the project.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* DAILY BADGES */}
             <Card>
               <CardHeader className="pb-4">
@@ -479,10 +625,17 @@ export function WeeklyReportSheet({
                         className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 ${
                           isBeforeJoinedDate
                             ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
+                            : selectedDays.has(day.key)
+                            ? "bg-blue-100 border-blue-300 ring-2 ring-blue-200"
+                            : bulkMode
+                            ? "bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-2 border-dashed border-gray-300 hover:border-gray-400"
                             : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
                         }`}
                         onClick={() => {
-                          if (!isBeforeJoinedDate) {
+                          if (isBeforeJoinedDate || isLoading) return;
+                          if (bulkMode) {
+                            toggleDaySelection(day.key);
+                          } else {
                             setEditingDay(day.key);
                             setDialogOpen(true);
                           }
@@ -493,7 +646,21 @@ export function WeeklyReportSheet({
                           <span className="font-semibold text-sm text-blue-700">
                             {day.label}
                           </span>
-                          <Edit className="h-3 w-3 text-blue-500 shrink-0" />
+                          {bulkMode ? (
+                            <div
+                              className={`h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center ${
+                                selectedDays.has(day.key)
+                                  ? "bg-blue-500 border-blue-500"
+                                  : "border-gray-300"
+                              }`}
+                            >
+                              {selectedDays.has(day.key) && (
+                                <CheckSquare className="h-3 w-3 text-white" />
+                              )}
+                            </div>
+                          ) : (
+                            <Edit className="h-3 w-3 text-blue-500 shrink-0" />
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {format(weekDates[index], "MMM d")}
@@ -504,12 +671,23 @@ export function WeeklyReportSheet({
                             {hours[day.key]}h
                           </span>
                         </div>
-                        <div className="text-xs text-purple-700 font-medium truncate w-full min-w-0">
-                          {projects[day.key] && projects[day.key] !== "none"
-                            ? userProjects.find(
+                        <div className="flex items-center gap-1">
+                          {projects[day.key] && projects[day.key] !== "none" ? (
+                            <Badge
+                              variant="secondary"
+                              className={`text-xs px-1.5 py-0.5 border ${getProjectColor(
+                                projects[day.key]
+                              )}`}
+                            >
+                              {userProjects.find(
                                 (p) => p.id === projects[day.key]
-                              )?.projectName || projects[day.key]
-                            : "No project"}
+                              )?.projectName || projects[day.key]}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-gray-500">
+                              No project
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-600 truncate w-full min-w-0">
                           {descriptions[day.key] || "No description"}
@@ -578,17 +756,20 @@ export function WeeklyReportSheet({
                     Project
                   </label>
                   <Select
-                    value={editingDay ? projects[editingDay] || "none" : "none"}
+                    value={
+                      editingDay
+                        ? projects[editingDay] || userProjects[0]?.id
+                        : userProjects[0]?.id
+                    }
                     onValueChange={(v) =>
-                      editingDay &&
-                      updateProject(editingDay, v === "none" ? "none" : v)
+                      editingDay && updateProject(editingDay, v)
                     }
                   >
                     <SelectTrigger className="mt-0 h-10 sm:h-9">
-                      <SelectValue placeholder="Select project" />
+                      <SelectValue />
                     </SelectTrigger>
+
                     <SelectContent>
-                      <SelectItem value="none">Not selected</SelectItem>
                       {userProjects.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.projectName}
