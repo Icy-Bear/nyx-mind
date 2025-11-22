@@ -19,8 +19,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ActionDialog } from "@/components/action-dialog";
 
-import { ChevronLeft, ChevronRight, Clock, Save, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Save, Activity, Edit } from "lucide-react";
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 
@@ -41,6 +42,8 @@ export function WeeklyReportSheet({
   member,
 }: WeeklyReportSheetProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [editingDay, setEditingDay] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const [hours, setHours] = useState<Record<string, number>>({
     mon: 4,
@@ -123,7 +126,7 @@ export function WeeklyReportSheet({
             <div>
               <SheetTitle className="text-2xl font-bold flex items-center gap-2">
                 <Activity className="h-6 w-6 text-primary" />
-                {member.name}'s Weekly Report
+                {member.name}&apos;s Weekly Report
               </SheetTitle>
               <SheetDescription className="text-base text-muted-foreground mt-1">
                 {member.email} • {format(weekStart, "MMM d")} -{" "}
@@ -189,7 +192,7 @@ export function WeeklyReportSheet({
               </CardContent>
             </Card>
 
-            {/* HOURS + PROJECT + DESCRIPTION */}
+            {/* DAILY BADGES */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -198,82 +201,123 @@ export function WeeklyReportSheet({
               </CardHeader>
 
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {DAYS.map((day, index) => (
-                    <div
+                    <Button
                       key={day.key}
-                      className="space-y-3 border rounded-lg p-4 bg-muted/30"
+                      variant="outline"
+                      className="h-auto p-4 flex flex-col items-start gap-2 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300 rounded-xl transition-all duration-200"
+                      onClick={() => {
+                        setEditingDay(day.key);
+                        setDialogOpen(true);
+                      }}
                     >
-                      {/* Day */}
-                      <div className="text-center">
-                        <div className="font-medium text-sm">{day.label}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(weekDates[index], "MMM d")}
-                        </div>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-semibold text-sm text-blue-700">
+                          {day.label}
+                        </span>
+                        <Edit className="h-3 w-3 text-blue-500" />
                       </div>
-
-                      {/* Hours */}
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => decrementHours(day.key)}
-                          disabled={hours[day.key] <= 0}
-                        >
-                          -
-                        </Button>
-
-                        <div className="flex items-center justify-center w-12 h-8 border rounded-md bg-muted/50">
-                          <span className="font-mono text-sm font-medium">
-                            {hours[day.key]}
-                          </span>
-                        </div>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => incrementHours(day.key)}
-                          disabled={hours[day.key] >= 24}
-                        >
-                          +
-                        </Button>
+                      <div className="text-xs text-muted-foreground">
+                        {format(weekDates[index], "MMM d")}
                       </div>
-
-                      {/* Project Select */}
-                      <Select
-                        value={projects[day.key]}
-                        onValueChange={(v) => updateProject(day.key, v)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select project" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="nivaas">Nivaas</SelectItem>
-                          <SelectItem value="tdc">TDC Community</SelectItem>
-                          <SelectItem value="mithayadarpan">
-                            MithayaDarpan
-                          </SelectItem>
-                          <SelectItem value="android-app">
-                            Android Attendance System
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {/* Description */}
-                      <Textarea
-                        placeholder="What did you work on?"
-                        value={descriptions[day.key]}
-                        onChange={(e) =>
-                          updateDescription(day.key, e.target.value)
-                        }
-                      />
-                    </div>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Clock className="h-3 w-3 text-green-600" />
+                        <span className="font-medium text-green-700">
+                          {hours[day.key]}h
+                        </span>
+                      </div>
+                      <div className="text-xs text-purple-700 font-medium truncate w-full">
+                        {projects[day.key]}
+                      </div>
+                      <div className="text-xs text-gray-600 truncate w-full">
+                        {descriptions[day.key] || "No description"}
+                      </div>
+                    </Button>
                   ))}
                 </div>
               </CardContent>
             </Card>
+
+            {/* EDIT DIALOG */}
+            {editingDay && (
+              <ActionDialog
+                title={`Edit ${DAYS.find(d => d.key === editingDay)?.fullLabel}`}
+                description='Update your hours, project, and description for this day.'
+                label=""
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                size="md"
+              >
+                <div className="space-y-4">
+                  {/* Hours */}
+                  <div>
+                    <label className="text-sm font-medium">Hours</label>
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => decrementHours(editingDay)}
+                        disabled={hours[editingDay] <= 0}
+                      >
+                        -
+                      </Button>
+                      <div className="flex items-center justify-center w-12 h-8 border rounded-md bg-muted/50">
+                        <span className="font-mono text-sm font-medium">
+                          {hours[editingDay]}
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => incrementHours(editingDay)}
+                        disabled={hours[editingDay] >= 24}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Project */}
+                  <div>
+                    <label className="text-sm font-medium">Project</label>
+                    <Select
+                      value={projects[editingDay]}
+                      onValueChange={(v) => updateProject(editingDay, v)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nivaas">Nivaas</SelectItem>
+                        <SelectItem value="tdc">TDC Community</SelectItem>
+                        <SelectItem value="mithayadarpan">
+                          MithayaDarpan
+                        </SelectItem>
+                        <SelectItem value="android-app">
+                          Android Attendance System
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      placeholder="What did you work on?"
+                      value={descriptions[editingDay]}
+                      onChange={(e) =>
+                        updateDescription(editingDay, e.target.value)
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </ActionDialog>
+            )}
           </div>
         </div>
 
