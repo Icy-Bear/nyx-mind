@@ -18,7 +18,7 @@ import { ActionDialog } from "@/components/action-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "next/navigation";
 import { ProjectWithAssignees, User } from "@/lib/types";
-import { WeeklyReportSheet } from "@/components/MemberDetailsPanel";
+import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
 
 export default function ProjectPage() {
   const [project, setProject] = useState<ProjectWithAssignees | null>(null);
