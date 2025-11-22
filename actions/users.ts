@@ -74,3 +74,30 @@ export async function deleteUser(userId: string) {
     throw new Error("Failed to delete user");
   }
 }
+
+export async function updateUserJoinedAt(userId: string, joinedAt: Date) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || session.user.role !== "admin") {
+      throw new Error("Unauthorized - Admin access required");
+    }
+
+    await db
+      .update(user)
+      .set({ createdAt: joinedAt })
+      .where(eq(user.id, userId));
+
+    revalidatePath("/dashboard/users");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating user joined date:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to update user joined date");
+  }
+}

@@ -20,6 +20,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import {
   MoreHorizontal,
   Search,
@@ -32,7 +40,7 @@ import {
   List,
 } from "lucide-react";
 import { SelectUser } from "@/db/schema/auth-schema";
-import { deleteUser } from "@/actions/users";
+import { deleteUser, updateUserJoinedAt } from "@/actions/users";
 import { toast } from "sonner";
 
 interface UserListProps {
@@ -49,6 +57,11 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     userName: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editUser, setEditUser] = useState<{
+    user: SelectUser;
+    joinedAt: Date;
+  } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -75,6 +88,20 @@ export default function UserList({ users, currentUserId }: UserListProps) {
       toast.error("Failed to delete user");
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleUpdateJoinedAt() {
+    if (!editUser) return;
+    try {
+      setIsUpdating(true);
+      await updateUserJoinedAt(editUser.user.id, editUser.joinedAt);
+      toast.success("User joined date updated successfully");
+      setEditUser(null);
+    } catch (_error) {
+      toast.error("Failed to update user joined date");
+    } finally {
+      setIsUpdating(false);
     }
   }
 
@@ -197,24 +224,31 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit User
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          setDeleteConfirm({
-                            userId: user.id,
-                            userName: user.name,
-                          })
-                        }
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete User
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+                     <DropdownMenuContent align="end">
+                       <DropdownMenuItem
+                         onClick={() =>
+                           setEditUser({
+                             user,
+                             joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+                           })
+                         }
+                       >
+                         <Edit className="h-4 w-4 mr-2" />
+                         Edit Joined Date
+                       </DropdownMenuItem>
+                       <DropdownMenuItem
+                         onClick={() =>
+                           setDeleteConfirm({
+                             userId: user.id,
+                             userName: user.name,
+                           })
+                         }
+                         className="text-red-600"
+                       >
+                         <Trash2 className="h-4 w-4 mr-2" />
+                         Delete User
+                       </DropdownMenuItem>
+                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
 
@@ -329,14 +363,20 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="hidden sm:flex"
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       className="hidden sm:flex"
+                       onClick={() =>
+                         setEditUser({
+                           user,
+                           joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+                         })
+                       }
+                     >
+                       <Edit className="h-3 w-3 mr-1" />
+                       Edit
+                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -400,6 +440,66 @@ export default function UserList({ users, currentUserId }: UserListProps) {
           {viewMode === "grid" ? "Grid" : "List"} view
         </div>
       )}
+
+      {/* Edit User Dialog */}
+      <Dialog
+        open={!!editUser}
+        onOpenChange={() => setEditUser(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User Joined Date</DialogTitle>
+            <DialogDescription>
+              Update the joined date for <strong>{editUser?.user.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Joined Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !editUser?.joinedAt && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {editUser?.joinedAt ? format(editUser.joinedAt, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={editUser?.joinedAt}
+                    onSelect={(date) => {
+                      if (date && editUser) {
+                        setEditUser({ ...editUser, joinedAt: date });
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditUser(null)}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateJoinedAt}
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Updating..." : "Update Date"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

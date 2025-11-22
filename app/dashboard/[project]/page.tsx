@@ -253,9 +253,8 @@ export default function ProjectPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently
-                          delete the project "{project.projectName}" and remove
-                          all associated data.
+                          This action cannot be undone. This will permanently delete the project
+                          &ldquo;{project.projectName}&rdquo; and remove all associated data.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

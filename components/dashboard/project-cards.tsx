@@ -28,7 +28,7 @@ export function ProjectCards({ projects, role }: ProjectCardsProps) {
             ) : (
               <div>
                 <h3 className="text-lg font-semibold mb-2">No projects assigned</h3>
-                <p className="text-muted-foreground">You haven't been assigned to any projects yet.</p>
+                <p className="text-muted-foreground">You haven&apos;t been assigned to any projects yet.</p>
               </div>
             )}
           </CardContent>
