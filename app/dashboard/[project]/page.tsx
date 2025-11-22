@@ -34,6 +34,7 @@ export default function ProjectPage() {
   const [panelOpen, setPanelOpen] = useState(false);
 
   const { data: session } = useSession();
+  const loggedInUserId = session?.user?.id;
   const isAdmin = session?.user?.role === "admin";
   const params = useParams<{ project: string }>();
 
@@ -48,7 +49,6 @@ export default function ProjectPage() {
         setLoading(false);
       }
     };
-
     loadProject();
   }, [params.project]);
 
@@ -93,6 +93,13 @@ export default function ProjectPage() {
   if (!project) {
     return <div className="p-6">Project not found</div>;
   }
+
+  // --- SORT MEMBERS: Logged-in user first ---
+  const sortedAssignees = [...project.assignees].sort((a, b) => {
+    if (a.id === loggedInUserId) return -1;
+    if (b.id === loggedInUserId) return 1;
+    return 0;
+  });
 
   return (
     <>
@@ -154,7 +161,6 @@ export default function ProjectPage() {
 
           {/* Project Info Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-10">
-            {/* STATUS CARD */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Status</CardTitle>
@@ -170,7 +176,6 @@ export default function ProjectPage() {
               </CardContent>
             </Card>
 
-            {/* TEAM SIZE */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Team Size</CardTitle>
@@ -184,7 +189,6 @@ export default function ProjectPage() {
               </CardContent>
             </Card>
 
-            {/* DATES */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -238,37 +242,62 @@ export default function ProjectPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {project.assignees.map((assignee) => (
-                      <tr
-                        key={assignee.id}
-                        className="border-b transition hover:bg-muted/20 cursor-pointer"
-                        onClick={() => {
-                          setSelectedMember(assignee);
-                          setPanelOpen(true);
-                        }}
-                      >
-                        <td className="p-3 flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {assignee.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{assignee.name}</span>
-                        </td>
+                    {sortedAssignees.map((assignee) => {
+                      const canOpen = isAdmin || assignee.id === loggedInUserId;
 
-                        <td className="p-3 text-muted-foreground">
-                          {assignee.email}
-                        </td>
+                      return (
+                        <tr
+                          key={assignee.id}
+                          className={`
+                            border-b transition 
+                            ${
+                              canOpen
+                                ? "cursor-pointer"
+                                : "opacity-70 cursor-not-allowed"
+                            }
+                            ${
+                              assignee.id === loggedInUserId
+                                ? "bg-blue-300"
+                                : ""
+                            }
+                          `}
+                          onClick={() => {
+                            if (!canOpen) {
+                              toast.error("You can only view your own details");
+                              return;
+                            }
+                            setSelectedMember(assignee);
+                            setPanelOpen(true);
+                          }}
+                        >
+                          <td className="p-3 flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                {assignee.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium flex items-center gap-2">
+                              {assignee.name}
+                              {assignee.id === loggedInUserId && (
+                                <Badge variant="secondary">You</Badge>
+                              )}
+                            </span>
+                          </td>
 
-                        <td className="p-3">
-                          <Badge variant="outline">{assignee.role}</Badge>
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="p-3 text-muted-foreground">
+                            {assignee.email}
+                          </td>
+
+                          <td className="p-3">
+                            <Badge variant="outline">{assignee.role}</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
