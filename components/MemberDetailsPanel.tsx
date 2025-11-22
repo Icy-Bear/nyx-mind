@@ -10,29 +10,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Calendar } from "@/components/ui/calendar";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  TrendingUp,
-  Calendar as CalendarIcon,
-  Save,
-  Target,
-  Activity,
-} from "lucide-react";
+
+import { ChevronLeft, ChevronRight, Clock, Save, Activity } from "lucide-react";
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 
@@ -79,7 +58,10 @@ export function WeeklyReportSheet({
   const weekDates = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const updateHours = (dayKey: string, value: number) => {
-    setHours((prev) => ({ ...prev, [dayKey]: Math.max(0, Math.min(24, value)) }));
+    setHours((prev) => ({
+      ...prev,
+      [dayKey]: Math.max(0, Math.min(24, value)),
+    }));
   };
 
   const incrementHours = (dayKey: string) => {
@@ -91,13 +73,13 @@ export function WeeklyReportSheet({
   };
 
   const totalHours = Object.values(hours).reduce((a, b) => a + b, 0);
-  const workingDays = Object.values(hours).filter(h => h > 0).length;
+  const workingDays = Object.values(hours).filter((h) => h > 0).length;
   const averageHours = workingDays > 0 ? totalHours / workingDays : 0;
   const targetHours = 40; // Weekly target
   const progressPercentage = Math.min((totalHours / targetHours) * 100, 100);
 
   // Chart data
-  const chartData = DAYS.map(day => ({
+  const chartData = DAYS.map((day) => ({
     day: day.label,
     hours: hours[day.key],
     target: 8, // Daily target
@@ -105,7 +87,11 @@ export function WeeklyReportSheet({
 
   const pieData = [
     { name: "Worked", value: totalHours, color: "#3b82f6" },
-    { name: "Remaining", value: Math.max(0, targetHours - totalHours), color: "#e5e7eb" },
+    {
+      name: "Remaining",
+      value: Math.max(0, targetHours - totalHours),
+      color: "#e5e7eb",
+    },
   ];
 
   const chartConfig = {
@@ -135,11 +121,15 @@ export function WeeklyReportSheet({
                 {member.name}&apos;s Weekly Report
               </SheetTitle>
               <SheetDescription className="text-base text-muted-foreground mt-1">
-                {member.email} • {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+                {member.email} • {format(weekStart, "MMM d")} -{" "}
+                {format(weekEnd, "MMM d, yyyy")}
               </SheetDescription>
             </div>
             <Badge variant="secondary" className="text-sm">
-              Week {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}
+              Week{" "}
+              {Math.ceil(
+                (selectedDate.getDate() - selectedDate.getDay() + 1) / 7
+              )}
             </Badge>
           </div>
         </SheetHeader>
@@ -148,57 +138,50 @@ export function WeeklyReportSheet({
           <div className="p-6 space-y-6">
             {/* WEEK NAVIGATION */}
             <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  Week Navigation
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between mb-4">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedDate(new Date(selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000))}
+                    onClick={() =>
+                      setSelectedDate(
+                        new Date(
+                          selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000
+                        )
+                      )
+                    }
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous Week
+                    Previous
                   </Button>
 
                   <div className="text-center">
                     <div className="font-semibold text-lg">
-                      {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+                      {format(weekStart, "MMM d")} -{" "}
+                      {format(weekEnd, "MMM d, yyyy")}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Week {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)} of {selectedDate.getFullYear()}
+                      Week{" "}
+                      {Math.ceil(
+                        (selectedDate.getDate() - selectedDate.getDay() + 1) / 7
+                      )}
                     </div>
                   </div>
 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedDate(new Date(selectedDate.getTime() + 7 * 24 * 60 * 60 * 1000))}
+                    onClick={() =>
+                      setSelectedDate(
+                        new Date(
+                          selectedDate.getTime() + 7 * 24 * 60 * 60 * 1000
+                        )
+                      )
+                    }
                   >
-                    Next Week
+                    Next
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
-                </div>
-
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    className="rounded-md border w-fit"
-                    modifiers={{
-                      weekStart: weekStart,
-                      weekEnd: weekEnd,
-                    }}
-                    modifiersStyles={{
-                      weekStart: { backgroundColor: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" },
-                      weekEnd: { backgroundColor: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" },
-                    }}
-                  />
                 </div>
               </CardContent>
             </Card>
@@ -249,123 +232,12 @@ export function WeeklyReportSheet({
                       </div>
 
                       <div className="text-center">
-                        <span className="text-xs text-muted-foreground">hours</span>
+                        <span className="text-xs text-muted-foreground">
+                          hours
+                        </span>
                       </div>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* CHARTS & SUMMARY */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Bar Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Weekly Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[200px]">
-                    <BarChart data={chartData}>
-                      <XAxis dataKey="day" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="hours" fill="var(--color-hours)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-              {/* Pie Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Progress to Target</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig}>
-                    <div className="flex items-center justify-center h-[200px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute text-center">
-                        <div className="text-2xl font-bold">{totalHours}</div>
-                        <div className="text-sm text-muted-foreground">of {targetHours}h</div>
-                      </div>
-                    </div>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* SUMMARY STATS */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-primary">{totalHours}</div>
-                  <div className="text-sm text-muted-foreground">Total Hours</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">{workingDays}</div>
-                  <div className="text-sm text-muted-foreground">Working Days</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{averageHours.toFixed(1)}</div>
-                  <div className="text-sm text-muted-foreground">Avg/Day</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-orange-600">{Math.max(0, targetHours - totalHours)}</div>
-                  <div className="text-sm text-muted-foreground">Hours Left</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* PROGRESS BAR */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Weekly Target Progress</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {totalHours}/{targetHours} hours
-                  </span>
-                </div>
-                <Progress value={progressPercentage} className="h-3" />
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-muted-foreground">
-                    {progressPercentage.toFixed(0)}% complete
-                  </span>
-                  {totalHours >= targetHours && (
-                    <Badge variant="default" className="text-xs">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      Target Met!
-                    </Badge>
-                  )}
                 </div>
               </CardContent>
             </Card>
