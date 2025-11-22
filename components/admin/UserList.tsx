@@ -98,7 +98,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
       await updateUserJoinedAt(editUser.user.id, editUser.joinedAt);
       toast.success("User joined date updated successfully");
       setEditUser(null);
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update user joined date");
     } finally {
       setIsUpdating(false);

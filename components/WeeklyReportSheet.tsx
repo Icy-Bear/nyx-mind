@@ -485,9 +485,102 @@ export function WeeklyReportSheet({
                 </CardContent>
               </Card>
             </div>
-          </div>
+           </div>
 
-          <div className="p-4 sm:p-6 border-t bg-muted/30">
+           {/* EDIT DIALOG */}
+           <Dialog
+             open={dialogOpen}
+             onOpenChange={(open) => {
+               setDialogOpen(open);
+               if (!open) setEditingDay(null);
+             }}
+           >
+             <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+               <DialogTitle className="text-lg sm:text-xl">
+                 Edit {DAYS.find((d) => d.key === editingDay)?.fullLabel}
+               </DialogTitle>
+               <DialogDescription className="text-sm sm:text-base">
+                 Update your hours, project, and description for this day.
+               </DialogDescription>
+               <div className="mt-4 sm:mt-6">
+                 <div className="space-y-4 sm:space-y-6">
+                   {/* Hours */}
+                   <div>
+                     <label className="text-sm font-medium block mb-2">
+                       Hours
+                     </label>
+                     <div className="flex items-center justify-center gap-3 sm:gap-2">
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0"
+                         onClick={() => editingDay && decrementHours(editingDay)}
+                         disabled={!editingDay || hours[editingDay] <= 0}
+                       >
+                         -
+                       </Button>
+                       <div className="flex items-center justify-center w-14 sm:w-12 h-9 sm:h-8 border rounded-md bg-muted/50 min-w-[3.5rem] sm:min-w-[3rem]">
+                         <span className="font-mono text-sm sm:text-sm font-medium">
+                           {editingDay ? hours[editingDay] : 0}
+                         </span>
+                       </div>
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0"
+                         onClick={() => editingDay && incrementHours(editingDay)}
+                         disabled={!editingDay || hours[editingDay] >= 24}
+                       >
+                         +
+                       </Button>
+                     </div>
+                   </div>
+
+                   {/* Project */}
+                   <div>
+                     <label className="text-sm font-medium block mb-2">
+                       Project
+                     </label>
+                     <Select
+                       value={editingDay ? projects[editingDay] : ""}
+                       onValueChange={(v) => editingDay && updateProject(editingDay, v)}
+                     >
+                       <SelectTrigger className="mt-0 h-10 sm:h-9">
+                         <SelectValue placeholder="Select project" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="nivaas">Nivaas</SelectItem>
+                         <SelectItem value="tdc">TDC Community</SelectItem>
+                         <SelectItem value="mithayadarpan">
+                           MithayaDarpan
+                         </SelectItem>
+                         <SelectItem value="android-app">
+                           Android Attendance System
+                         </SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+
+                   {/* Description */}
+                   <div>
+                     <label className="text-sm font-medium block mb-2">
+                       Description
+                     </label>
+                     <Textarea
+                       placeholder="What did you work on?"
+                       value={editingDay ? descriptions[editingDay] : ""}
+                       onChange={(e) =>
+                         editingDay && updateDescription(editingDay, e.target.value)
+                       }
+                       className="mt-0 min-h-[80px] sm:min-h-[100px] resize-none"
+                     />
+                   </div>
+                 </div>
+               </div>
+             </DialogContent>
+           </Dialog>
+
+           <div className="p-4 sm:p-6 border-t bg-muted/30">
           <Button
             className="w-full text-base sm:text-lg py-4 sm:py-6 h-auto sm:h-11"
             size="lg"
