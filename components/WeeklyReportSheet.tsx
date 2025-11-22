@@ -19,7 +19,12 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ActionDialog } from "@/components/action-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 import { ChevronLeft, ChevronRight, Clock, Save, Activity, Edit } from "lucide-react";
 import { useState } from "react";
@@ -241,82 +246,85 @@ export function WeeklyReportSheet({
 
             {/* EDIT DIALOG */}
             {editingDay && (
-              <ActionDialog
-                title={`Edit ${DAYS.find(d => d.key === editingDay)?.fullLabel}`}
-                description='Update your hours, project, and description for this day.'
-                label=""
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
-                size="md"
-              >
-                <div className="space-y-4">
-                  {/* Hours */}
-                  <div>
-                    <label className="text-sm font-medium">Hours</label>
-                    <div className="flex items-center justify-center gap-2 mt-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => decrementHours(editingDay)}
-                        disabled={hours[editingDay] <= 0}
-                      >
-                        -
-                      </Button>
-                      <div className="flex items-center justify-center w-12 h-8 border rounded-md bg-muted/50">
-                        <span className="font-mono text-sm font-medium">
-                          {hours[editingDay]}
-                        </span>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                  <DialogTitle>
+                    Edit {DAYS.find(d => d.key === editingDay)?.fullLabel}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Update your hours, project, and description for this day.
+                  </DialogDescription>
+                  <div className="mt-4">
+                    <div className="space-y-4">
+                      {/* Hours */}
+                      <div>
+                        <label className="text-sm font-medium">Hours</label>
+                        <div className="flex items-center justify-center gap-2 mt-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => decrementHours(editingDay)}
+                            disabled={hours[editingDay] <= 0}
+                          >
+                            -
+                          </Button>
+                          <div className="flex items-center justify-center w-12 h-8 border rounded-md bg-muted/50">
+                            <span className="font-mono text-sm font-medium">
+                              {hours[editingDay]}
+                            </span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => incrementHours(editingDay)}
+                            disabled={hours[editingDay] >= 24}
+                          >
+                            +
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => incrementHours(editingDay)}
-                        disabled={hours[editingDay] >= 24}
-                      >
-                        +
-                      </Button>
+
+                      {/* Project */}
+                      <div>
+                        <label className="text-sm font-medium">Project</label>
+                        <Select
+                          value={projects[editingDay]}
+                          onValueChange={(v) => updateProject(editingDay, v)}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select project" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="nivaas">Nivaas</SelectItem>
+                            <SelectItem value="tdc">TDC Community</SelectItem>
+                            <SelectItem value="mithayadarpan">
+                              MithayaDarpan
+                            </SelectItem>
+                            <SelectItem value="android-app">
+                              Android Attendance System
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <label className="text-sm font-medium">Description</label>
+                        <Textarea
+                          placeholder="What did you work on?"
+                          value={descriptions[editingDay]}
+                          onChange={(e) =>
+                            updateDescription(editingDay, e.target.value)
+                          }
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
-
-                  {/* Project */}
-                  <div>
-                    <label className="text-sm font-medium">Project</label>
-                    <Select
-                      value={projects[editingDay]}
-                      onValueChange={(v) => updateProject(editingDay, v)}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="nivaas">Nivaas</SelectItem>
-                        <SelectItem value="tdc">TDC Community</SelectItem>
-                        <SelectItem value="mithayadarpan">
-                          MithayaDarpan
-                        </SelectItem>
-                        <SelectItem value="android-app">
-                          Android Attendance System
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="text-sm font-medium">Description</label>
-                    <Textarea
-                      placeholder="What did you work on?"
-                      value={descriptions[editingDay]}
-                      onChange={(e) =>
-                        updateDescription(editingDay, e.target.value)
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </ActionDialog>
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </div>
