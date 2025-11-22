@@ -1,3 +1,4 @@
+// Updated WeeklyReportSheet with project dropdown and daily description
 "use client";
 
 import {
@@ -10,6 +11,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 import { ChevronLeft, ChevronRight, Clock, Save, Activity } from "lucide-react";
 import { useState } from "react";
@@ -43,17 +52,45 @@ export function WeeklyReportSheet({
     sun: 0,
   });
 
+  // NEW: Daily project selection state
+  const [projects, setProjects] = useState<Record<string, string>>({
+    mon: "nivaas",
+    tue: "nivaas",
+    wed: "nivaas",
+    thu: "nivaas",
+    fri: "nivaas",
+    sat: "nivaas",
+    sun: "nivaas",
+  });
+
+  const updateProject = (dayKey: string, value: string) => {
+    setProjects((prev) => ({
+      ...prev,
+      [dayKey]: value,
+    }));
+  };
+
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({
+    mon: "",
+    tue: "",
+    wed: "",
+    thu: "",
+    fri: "",
+    sat: "",
+    sun: "",
+  });
+
   const DAYS = [
-    { key: "mon" as const, label: "Mon", fullLabel: "Monday" },
-    { key: "tue" as const, label: "Tue", fullLabel: "Tuesday" },
-    { key: "wed" as const, label: "Wed", fullLabel: "Wednesday" },
-    { key: "thu" as const, label: "Thu", fullLabel: "Thursday" },
-    { key: "fri" as const, label: "Fri", fullLabel: "Friday" },
-    { key: "sat" as const, label: "Sat", fullLabel: "Saturday" },
-    { key: "sun" as const, label: "Sun", fullLabel: "Sunday" },
+    { key: "mon", label: "Mon", fullLabel: "Monday" },
+    { key: "tue", label: "Tue", fullLabel: "Tuesday" },
+    { key: "wed", label: "Wed", fullLabel: "Wednesday" },
+    { key: "thu", label: "Thu", fullLabel: "Thursday" },
+    { key: "fri", label: "Fri", fullLabel: "Friday" },
+    { key: "sat", label: "Sat", fullLabel: "Saturday" },
+    { key: "sun", label: "Sun", fullLabel: "Sunday" },
   ];
 
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday start
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDates = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
@@ -64,45 +101,13 @@ export function WeeklyReportSheet({
     }));
   };
 
-  const incrementHours = (dayKey: string) => {
+  const incrementHours = (dayKey: string) =>
     updateHours(dayKey, hours[dayKey] + 1);
-  };
-
-  const decrementHours = (dayKey: string) => {
+  const decrementHours = (dayKey: string) =>
     updateHours(dayKey, hours[dayKey] - 1);
-  };
 
-  const totalHours = Object.values(hours).reduce((a, b) => a + b, 0);
-  const workingDays = Object.values(hours).filter((h) => h > 0).length;
-  const averageHours = workingDays > 0 ? totalHours / workingDays : 0;
-  const targetHours = 40; // Weekly target
-  const progressPercentage = Math.min((totalHours / targetHours) * 100, 100);
-
-  // Chart data
-  const chartData = DAYS.map((day) => ({
-    day: day.label,
-    hours: hours[day.key],
-    target: 8, // Daily target
-  }));
-
-  const pieData = [
-    { name: "Worked", value: totalHours, color: "#3b82f6" },
-    {
-      name: "Remaining",
-      value: Math.max(0, targetHours - totalHours),
-      color: "#e5e7eb",
-    },
-  ];
-
-  const chartConfig = {
-    hours: {
-      label: "Hours",
-      color: "hsl(var(--chart-1))",
-    },
-    target: {
-      label: "Target",
-      color: "hsl(var(--chart-2))",
-    },
+  const updateDescription = (dayKey: string, text: string) => {
+    setDescriptions((prev) => ({ ...prev, [dayKey]: text }));
   };
 
   if (!member) return null;
@@ -118,7 +123,7 @@ export function WeeklyReportSheet({
             <div>
               <SheetTitle className="text-2xl font-bold flex items-center gap-2">
                 <Activity className="h-6 w-6 text-primary" />
-                {member.name}&apos;s Weekly Report
+                {member.name}'s Weekly Report
               </SheetTitle>
               <SheetDescription className="text-base text-muted-foreground mt-1">
                 {member.email} • {format(weekStart, "MMM d")} -{" "}
@@ -151,8 +156,7 @@ export function WeeklyReportSheet({
                       )
                     }
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                   </Button>
 
                   <div className="text-center">
@@ -179,25 +183,28 @@ export function WeeklyReportSheet({
                       )
                     }
                   >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    Next <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* HOURS INPUT */}
+            {/* HOURS + PROJECT + DESCRIPTION */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Daily Hours
+                  <Clock className="h-5 w-5" /> Daily Logs
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {DAYS.map((day, index) => (
-                    <div key={day.key} className="space-y-3">
+                    <div
+                      key={day.key}
+                      className="space-y-3 border rounded-lg p-4 bg-muted/30"
+                    >
+                      {/* Day */}
                       <div className="text-center">
                         <div className="font-medium text-sm">{day.label}</div>
                         <div className="text-xs text-muted-foreground">
@@ -205,6 +212,7 @@ export function WeeklyReportSheet({
                         </div>
                       </div>
 
+                      {/* Hours */}
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="outline"
@@ -215,11 +223,13 @@ export function WeeklyReportSheet({
                         >
                           -
                         </Button>
+
                         <div className="flex items-center justify-center w-12 h-8 border rounded-md bg-muted/50">
                           <span className="font-mono text-sm font-medium">
                             {hours[day.key]}
                           </span>
                         </div>
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -231,11 +241,34 @@ export function WeeklyReportSheet({
                         </Button>
                       </div>
 
-                      <div className="text-center">
-                        <span className="text-xs text-muted-foreground">
-                          hours
-                        </span>
-                      </div>
+                      {/* Project Select */}
+                      <Select
+                        value={projects[day.key]}
+                        onValueChange={(v) => updateProject(day.key, v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nivaas">Nivaas</SelectItem>
+                          <SelectItem value="tdc">TDC Community</SelectItem>
+                          <SelectItem value="mithayadarpan">
+                            MithayaDarpan
+                          </SelectItem>
+                          <SelectItem value="android-app">
+                            Android Attendance System
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {/* Description */}
+                      <Textarea
+                        placeholder="What did you work on?"
+                        value={descriptions[day.key]}
+                        onChange={(e) =>
+                          updateDescription(day.key, e.target.value)
+                        }
+                      />
                     </div>
                   ))}
                 </div>
@@ -244,11 +277,9 @@ export function WeeklyReportSheet({
           </div>
         </div>
 
-        {/* SAVE BUTTON */}
         <div className="p-6 border-t bg-muted/30">
           <Button className="w-full text-lg py-6" size="lg">
-            <Save className="h-5 w-5 mr-2" />
-            Save Weekly Report
+            <Save className="h-5 w-5 mr-2" /> Save Weekly Report
           </Button>
         </div>
       </SheetContent>
