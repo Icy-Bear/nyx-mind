@@ -134,6 +134,12 @@ export function WeeklyReportSheet({
     }
   };
 
+  const getWeekOfMonth = (date: Date) => {
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const dayOfMonth = date.getDate();
+    return Math.ceil((dayOfMonth + startOfMonth.getDay() - 1) / 7);
+  };
+
   if (!member) return null;
 
   return (
@@ -202,6 +208,18 @@ export function WeeklyReportSheet({
                         onSelect={handleDateSelect}
                         initialFocus
                         className="rounded-md border-0"
+                        modifiers={{
+                          week1: (date) => getWeekOfMonth(date) === 1,
+                          week2: (date) => getWeekOfMonth(date) === 2,
+                          week3: (date) => getWeekOfMonth(date) === 3,
+                          week4: (date) => getWeekOfMonth(date) === 4,
+                        }}
+                        modifiersClassNames={{
+                          week1: "bg-blue-50 hover:bg-blue-100 text-blue-700",
+                          week2: "bg-green-50 hover:bg-green-100 text-green-700",
+                          week3: "bg-yellow-50 hover:bg-yellow-100 text-yellow-700",
+                          week4: "bg-purple-50 hover:bg-purple-100 text-purple-700",
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
