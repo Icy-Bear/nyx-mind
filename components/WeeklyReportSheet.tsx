@@ -46,6 +46,7 @@ import {
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 import { saveWeeklyReport, getWeeklyReport } from "@/actions/weekly-reports";
+import { getProjects } from "@/actions/projects";
 import { toast } from "sonner";
 
 interface WeeklyReportSheetProps {
@@ -71,11 +72,16 @@ export function WeeklyReportSheet({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [userProjects, setUserProjects] = useState<
+    Array<{ id: string; projectName: string }>
+  >([]);
 
   // Ensure selected date is not before user's joined date
   useEffect(() => {
     if (member?.createdAt && selectedDate) {
-      const joinedWeek = startOfWeek(new Date(member.createdAt), { weekStartsOn: 1 });
+      const joinedWeek = startOfWeek(new Date(member.createdAt), {
+        weekStartsOn: 1,
+      });
       const currentWeek = startOfWeek(selectedDate, { weekStartsOn: 1 });
 
       if (currentWeek < joinedWeek) {
@@ -83,6 +89,31 @@ export function WeeklyReportSheet({
       }
     }
   }, [member, selectedDate]);
+
+  // Load user projects when member changes
+  useEffect(() => {
+    const loadUserProjects = async () => {
+      if (!member) return;
+
+      try {
+        const projects = await getProjects(member.id);
+        setUserProjects(
+          projects.map((p) => ({ id: p.id, projectName: p.projectName }))
+        );
+      } catch (error) {
+        console.error("Error loading user projects:", error);
+        // Set default projects if fetch fails
+        setUserProjects([
+          { id: "nivaas", projectName: "Nivaas" },
+          { id: "tdc", projectName: "TDC Community" },
+          { id: "mithayadarpan", projectName: "MithayaDarpan" },
+          { id: "android-app", projectName: "Android Attendance System" },
+        ]);
+      }
+    };
+
+    loadUserProjects();
+  }, [member]);
 
   // Load weekly report data when week changes
   useEffect(() => {
@@ -109,14 +140,15 @@ export function WeeklyReportSheet({
             sat: 0,
             sun: 0,
           });
+          // Set default project to "none" (no project selected)
           setProjects({
-            mon: "nivaas",
-            tue: "nivaas",
-            wed: "nivaas",
-            thu: "nivaas",
-            fri: "nivaas",
-            sat: "nivaas",
-            sun: "nivaas",
+            mon: "none",
+            tue: "none",
+            wed: "none",
+            thu: "none",
+            fri: "none",
+            sat: "none",
+            sun: "none",
           });
           setDescriptions({
             mon: "",
@@ -137,7 +169,7 @@ export function WeeklyReportSheet({
     };
 
     loadWeeklyReport();
-  }, [selectedDate, member]);
+  }, [selectedDate, member, userProjects]);
 
   const [hours, setHours] = useState<Record<string, number>>({
     mon: 4,
@@ -290,23 +322,23 @@ export function WeeklyReportSheet({
             <Card>
               <CardContent className="pt-4 sm:pt-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     className="w-full sm:w-auto"
-                     disabled={
-                       earliestAllowedWeek
-                         ? weekStart <= earliestAllowedWeek
-                         : false
-                     }
-                     onClick={() =>
-                       setSelectedDate(
-                         new Date(
-                           selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000
-                         )
-                       )
-                     }
-                   >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={
+                      earliestAllowedWeek
+                        ? weekStart <= earliestAllowedWeek
+                        : false
+                    }
+                    onClick={() =>
+                      setSelectedDate(
+                        new Date(
+                          selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000
+                        )
+                      )
+                    }
+                  >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     <span className="hidden sm:inline">Previous</span>
                     <span className="sm:hidden">Prev</span>
@@ -434,153 +466,159 @@ export function WeeklyReportSheet({
                     isLoading ? "opacity-50 pointer-events-none" : ""
                   }`}
                 >
-                   {DAYS.map((day, index) => {
-                     const dayDate = weekDates[index];
-                     const isBeforeJoinedDate = member?.createdAt
-                       ? dayDate < new Date(member.createdAt)
-                       : false;
+                  {DAYS.map((day, index) => {
+                    const dayDate = weekDates[index];
+                    const isBeforeJoinedDate = member?.createdAt
+                      ? dayDate < new Date(member.createdAt)
+                      : false;
 
-                     return (
-                       <Button
-                         key={day.key}
-                         variant="outline"
-                         className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 ${
-                           isBeforeJoinedDate
-                             ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
-                             : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
-                         }`}
-                         onClick={() => {
-                           if (!isBeforeJoinedDate) {
-                             setEditingDay(day.key);
-                             setDialogOpen(true);
-                           }
-                         }}
-                         disabled={isLoading || isBeforeJoinedDate}
-                       >
-                         <div className="flex items-center justify-between w-full">
-                           <span className="font-semibold text-sm text-blue-700">
-                             {day.label}
-                           </span>
-                           <Edit className="h-3 w-3 text-blue-500 shrink-0" />
-                         </div>
-                         <div className="text-xs text-muted-foreground">
-                           {format(weekDates[index], "MMM d")}
-                         </div>
-                         <div className="flex items-center gap-1 text-sm">
-                           <Clock className="h-3 w-3 text-green-600 shrink-0" />
-                           <span className="font-medium text-green-700">
-                             {hours[day.key]}h
-                           </span>
-                         </div>
-                         <div className="text-xs text-purple-700 font-medium truncate w-full min-w-0">
-                           {projects[day.key]}
-                         </div>
-                         <div className="text-xs text-gray-600 truncate w-full min-w-0">
-                           {descriptions[day.key] || "No description"}
-                         </div>
-                        </Button>
-                      );
-                     })}
-                 </div>
-                </CardContent>
-              </Card>
+                    return (
+                      <Button
+                        key={day.key}
+                        variant="outline"
+                        className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 ${
+                          isBeforeJoinedDate
+                            ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
+                            : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
+                        }`}
+                        onClick={() => {
+                          if (!isBeforeJoinedDate) {
+                            setEditingDay(day.key);
+                            setDialogOpen(true);
+                          }
+                        }}
+                        disabled={isLoading || isBeforeJoinedDate}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-semibold text-sm text-blue-700">
+                            {day.label}
+                          </span>
+                          <Edit className="h-3 w-3 text-blue-500 shrink-0" />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(weekDates[index], "MMM d")}
+                        </div>
+                        <div className="flex items-center gap-1 text-sm">
+                          <Clock className="h-3 w-3 text-green-600 shrink-0" />
+                          <span className="font-medium text-green-700">
+                            {hours[day.key]}h
+                          </span>
+                        </div>
+                        <div className="text-xs text-purple-700 font-medium truncate w-full min-w-0">
+                          {projects[day.key] && projects[day.key] !== "none"
+                            ? userProjects.find(
+                                (p) => p.id === projects[day.key]
+                              )?.projectName || projects[day.key]
+                            : "No project"}
+                        </div>
+                        <div className="text-xs text-gray-600 truncate w-full min-w-0">
+                          {descriptions[day.key] || "No description"}
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* EDIT DIALOG */}
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setEditingDay(null);
+          }}
+        >
+          <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+            <DialogTitle className="text-lg sm:text-xl">
+              Edit {DAYS.find((d) => d.key === editingDay)?.fullLabel}
+            </DialogTitle>
+            <DialogDescription className="text-sm sm:text-base">
+              Update your hours, project, and description for this day.
+            </DialogDescription>
+            <div className="mt-4 sm:mt-6">
+              <div className="space-y-4 sm:space-y-6">
+                {/* Hours */}
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Hours
+                  </label>
+                  <div className="flex items-center justify-center gap-3 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0"
+                      onClick={() => editingDay && decrementHours(editingDay)}
+                      disabled={!editingDay || hours[editingDay] <= 0}
+                    >
+                      -
+                    </Button>
+                    <div className="flex items-center justify-center w-14 sm:w-12 h-9 sm:h-8 border rounded-md bg-muted/50 min-w-[3.5rem] sm:min-w-[3rem]">
+                      <span className="font-mono text-sm sm:text-sm font-medium">
+                        {editingDay ? hours[editingDay] : 0}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0"
+                      onClick={() => editingDay && incrementHours(editingDay)}
+                      disabled={!editingDay || hours[editingDay] >= 24}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Project */}
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Project
+                  </label>
+                  <Select
+                    value={editingDay ? projects[editingDay] || "none" : "none"}
+                    onValueChange={(v) =>
+                      editingDay &&
+                      updateProject(editingDay, v === "none" ? "none" : v)
+                    }
+                  >
+                    <SelectTrigger className="mt-0 h-10 sm:h-9">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not selected</SelectItem>
+                      {userProjects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.projectName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Description
+                  </label>
+                  <Textarea
+                    placeholder="What did you work on?"
+                    value={editingDay ? descriptions[editingDay] : ""}
+                    onChange={(e) =>
+                      editingDay &&
+                      updateDescription(editingDay, e.target.value)
+                    }
+                    className="mt-0 min-h-[80px] sm:min-h-[100px] resize-none"
+                  />
+                </div>
+              </div>
             </div>
-           </div>
+          </DialogContent>
+        </Dialog>
 
-           {/* EDIT DIALOG */}
-           <Dialog
-             open={dialogOpen}
-             onOpenChange={(open) => {
-               setDialogOpen(open);
-               if (!open) setEditingDay(null);
-             }}
-           >
-             <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-               <DialogTitle className="text-lg sm:text-xl">
-                 Edit {DAYS.find((d) => d.key === editingDay)?.fullLabel}
-               </DialogTitle>
-               <DialogDescription className="text-sm sm:text-base">
-                 Update your hours, project, and description for this day.
-               </DialogDescription>
-               <div className="mt-4 sm:mt-6">
-                 <div className="space-y-4 sm:space-y-6">
-                   {/* Hours */}
-                   <div>
-                     <label className="text-sm font-medium block mb-2">
-                       Hours
-                     </label>
-                     <div className="flex items-center justify-center gap-3 sm:gap-2">
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0"
-                         onClick={() => editingDay && decrementHours(editingDay)}
-                         disabled={!editingDay || hours[editingDay] <= 0}
-                       >
-                         -
-                       </Button>
-                       <div className="flex items-center justify-center w-14 sm:w-12 h-9 sm:h-8 border rounded-md bg-muted/50 min-w-[3.5rem] sm:min-w-[3rem]">
-                         <span className="font-mono text-sm sm:text-sm font-medium">
-                           {editingDay ? hours[editingDay] : 0}
-                         </span>
-                       </div>
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0"
-                         onClick={() => editingDay && incrementHours(editingDay)}
-                         disabled={!editingDay || hours[editingDay] >= 24}
-                       >
-                         +
-                       </Button>
-                     </div>
-                   </div>
-
-                   {/* Project */}
-                   <div>
-                     <label className="text-sm font-medium block mb-2">
-                       Project
-                     </label>
-                     <Select
-                       value={editingDay ? projects[editingDay] : ""}
-                       onValueChange={(v) => editingDay && updateProject(editingDay, v)}
-                     >
-                       <SelectTrigger className="mt-0 h-10 sm:h-9">
-                         <SelectValue placeholder="Select project" />
-                       </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="nivaas">Nivaas</SelectItem>
-                         <SelectItem value="tdc">TDC Community</SelectItem>
-                         <SelectItem value="mithayadarpan">
-                           MithayaDarpan
-                         </SelectItem>
-                         <SelectItem value="android-app">
-                           Android Attendance System
-                         </SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-
-                   {/* Description */}
-                   <div>
-                     <label className="text-sm font-medium block mb-2">
-                       Description
-                     </label>
-                     <Textarea
-                       placeholder="What did you work on?"
-                       value={editingDay ? descriptions[editingDay] : ""}
-                       onChange={(e) =>
-                         editingDay && updateDescription(editingDay, e.target.value)
-                       }
-                       className="mt-0 min-h-[80px] sm:min-h-[100px] resize-none"
-                     />
-                   </div>
-                 </div>
-               </div>
-             </DialogContent>
-           </Dialog>
-
-           <div className="p-4 sm:p-6 border-t bg-muted/30">
+        <div className="p-4 sm:p-6 border-t bg-muted/30">
           <Button
             className="w-full text-base sm:text-lg py-4 sm:py-6 h-auto sm:h-11"
             size="lg"
