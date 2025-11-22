@@ -41,9 +41,12 @@ import {
   Edit,
   CalendarIcon,
   ChevronDownIcon,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { saveWeeklyReport, getWeeklyReport } from "@/actions/weekly-reports";
+import { toast } from "sonner";
 
 interface WeeklyReportSheetProps {
   open: boolean;
@@ -65,6 +68,63 @@ export function WeeklyReportSheet({
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load weekly report data when week changes
+  useEffect(() => {
+    const loadWeeklyReport = async () => {
+      if (!member) return;
+
+      setIsLoading(true);
+      try {
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+        const report = await getWeeklyReport(weekStart);
+
+        if (report) {
+          setHours(report.hours);
+          setProjects(report.projects);
+          setDescriptions(report.descriptions);
+        } else {
+          // Reset to defaults for new week
+          setHours({
+            mon: 0,
+            tue: 0,
+            wed: 0,
+            thu: 0,
+            fri: 0,
+            sat: 0,
+            sun: 0,
+          });
+          setProjects({
+            mon: "nivaas",
+            tue: "nivaas",
+            wed: "nivaas",
+            thu: "nivaas",
+            fri: "nivaas",
+            sat: "nivaas",
+            sun: "nivaas",
+          });
+          setDescriptions({
+            mon: "",
+            tue: "",
+            wed: "",
+            thu: "",
+            fri: "",
+            sat: "",
+            sun: "",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading weekly report:", error);
+        toast.error("Failed to load weekly report");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadWeeklyReport();
+  }, [selectedDate, member]);
 
   const [hours, setHours] = useState<Record<string, number>>({
     mon: 4,
@@ -147,6 +207,25 @@ export function WeeklyReportSheet({
     const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     const dayOfMonth = date.getDate();
     return Math.ceil((dayOfMonth + startOfMonth.getDay() - 1) / 7);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      await saveWeeklyReport({
+        weekStartDate: weekStart,
+        hours,
+        projects,
+        descriptions,
+      });
+      toast.success("Weekly report saved successfully!");
+    } catch (error) {
+      console.error("Error saving weekly report:", error);
+      toast.error("Failed to save weekly report");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!member) return null;
@@ -314,7 +393,19 @@ export function WeeklyReportSheet({
               </CardHeader>
 
               <CardContent className="pt-0">
-                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                {isLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      Loading...
+                    </span>
+                  </div>
+                )}
+                <div
+                  className={`grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 ${
+                    isLoading ? "opacity-50 pointer-events-none" : ""
+                  }`}
+                >
                   {DAYS.map((day, index) => (
                     <Button
                       key={day.key}
@@ -324,6 +415,7 @@ export function WeeklyReportSheet({
                         setEditingDay(day.key);
                         setDialogOpen(true);
                       }}
+                      disabled={isLoading}
                     >
                       <div className="flex items-center justify-between w-full">
                         <span className="font-semibold text-sm text-blue-700">
@@ -435,8 +527,6 @@ export function WeeklyReportSheet({
                           className="mt-0 min-h-[80px] sm:min-h-[100px] resize-none"
                         />
                       </div>
-
-                      <Button onClick={() => setDialogOpen(false)}>save</Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -449,9 +539,15 @@ export function WeeklyReportSheet({
           <Button
             className="w-full text-base sm:text-lg py-4 sm:py-6 h-auto sm:h-11"
             size="lg"
+            onClick={handleSave}
+            disabled={isSaving || isLoading}
           >
-            <Save className="h-4 w-4 sm:h-5 sm:w-5 mr-2 shrink-0" /> Save Weekly
-            Report
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 shrink-0 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 sm:h-5 sm:w-5 mr-2 shrink-0" />
+            )}
+            {isSaving ? "Saving..." : "Save Weekly Report"}
           </Button>
         </div>
       </SheetContent>
