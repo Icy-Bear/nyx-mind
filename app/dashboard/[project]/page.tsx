@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
 import { UserPlus, Calendar, Users } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -32,6 +33,9 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [initialSelectedUsers, setInitialSelectedUsers] = useState<string[]>([]);
+  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{
     id: string;
     name: string;
@@ -70,11 +74,16 @@ export default function ProjectPage() {
   const loadUsers = async () => {
     if (allUsers.length > 0) return;
     try {
+      setIsLoadingUsers(true);
       const users = await getAllUsers();
       setAllUsers(users);
-      setSelectedUsers(project?.assignees.map((a) => a.id) || []);
+      const initialUsers = project?.assignees.map((a) => a.id) || [];
+      setSelectedUsers(initialUsers);
+      setInitialSelectedUsers(initialUsers);
     } catch (error) {
       toast.error("Failed to load users" + error);
+    } finally {
+      setIsLoadingUsers(false);
     }
   };
 
@@ -92,12 +101,16 @@ export default function ProjectPage() {
   const handleAssignUsers = async () => {
     if (!project) return;
     try {
+      setIsUpdatingTeam(true);
       await assignUsersToProject(project.id, selectedUsers);
       toast.success("Team members updated successfully");
       const updatedProject = await getProjectDetails(params.project);
       setProject(updatedProject);
+      setInitialSelectedUsers(selectedUsers); // Update initial state after successful update
     } catch (error) {
       toast.error("Failed to update team members" + error);
+    } finally {
+      setIsUpdatingTeam(false);
     }
   };
 
@@ -115,6 +128,9 @@ export default function ProjectPage() {
     if (b.id === loggedInUserId) return 1;
     return 0;
   });
+
+  // Check if team members have changed
+  const hasTeamChanges = JSON.stringify(selectedUsers.sort()) !== JSON.stringify(initialSelectedUsers.sort());
 
   return (
     <>
@@ -146,31 +162,43 @@ export default function ProjectPage() {
                     <DialogTitle>Manage Team Members</DialogTitle>
                     <DialogDescription>Add or remove team members from this project.</DialogDescription>
                     <div className="space-y-4">
-                      <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                        {allUsers.map((user) => (
-                          <div
-                            key={user.id}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={user.id}
-                              checked={selectedUsers.includes(user.id)}
-                              onCheckedChange={(checked) =>
-                                handleUserToggle(user.id, checked)
-                              }
-                            />
-                            <label
-                              htmlFor={user.id}
-                              className="text-sm font-medium leading-none"
-                            >
-                              {user.name} ({user.email}) - {user.role}
-                            </label>
+                      {isLoadingUsers ? (
+                        <div className="flex justify-center items-center py-8">
+                          <Spinner />
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                            {allUsers.map((user) => (
+                              <div
+                                key={user.id}
+                                className="flex items-center space-x-2"
+                              >
+                                <Checkbox
+                                  id={user.id}
+                                  checked={selectedUsers.includes(user.id)}
+                                  onCheckedChange={(checked) =>
+                                    handleUserToggle(user.id, checked)
+                                  }
+                                />
+                                <label
+                                  htmlFor={user.id}
+                                  className="text-sm font-medium leading-none"
+                                >
+                                  {user.name} ({user.email}) - {user.role}
+                                </label>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      <Button onClick={handleAssignUsers} className="w-full">
-                        Update Team Members
-                      </Button>
+                          <Button
+                            onClick={handleAssignUsers}
+                            className="w-full"
+                            disabled={!hasTeamChanges || isUpdatingTeam}
+                          >
+                            {isUpdatingTeam ? <Spinner /> : "Update Team Members"}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </DialogContent>
                 </Dialog>
