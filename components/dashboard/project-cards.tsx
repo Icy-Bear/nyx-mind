@@ -16,15 +16,23 @@ export function ProjectCards({ projects, role }: ProjectCardsProps) {
 
   if (projects.length === 0) {
     return (
-      <div className="flex justify-center items-center h-full">
-        {role === "admin" ? (
-          <p className="text-gray-400">create a project</p>
-        ) : (
-          <p className="text-gray-400">
-            {" "}
-            you are not assigned to a project yet
-          </p>
-        )}
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            {role === "admin" ? (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+                <p className="text-muted-foreground">Create your first project to get started.</p>
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">No projects assigned</h3>
+                <p className="text-muted-foreground">You haven't been assigned to any projects yet.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
