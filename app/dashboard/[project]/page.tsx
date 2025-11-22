@@ -82,11 +82,15 @@ export default function ProjectPage() {
   }, [params.project]);
 
   useEffect(() => {
-    if (project) {
+    if (loading) {
+      setTitle("Loading...");
+    } else if (project) {
       setTitle(project.projectName || "Project Details");
+    } else {
+      setTitle("Project Details");
     }
     return () => setTitle(null); // Clean up on unmount
-  }, [project, setTitle]);
+  }, [project, loading, setTitle]);
 
   const loadUsers = async () => {
     if (allUsers.length > 0 || isLoadingUsers) return;
@@ -187,58 +191,60 @@ export default function ProjectPage() {
                     }}
                   >
                     <DialogTrigger asChild>
-                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                         <UserPlus className="h-4 w-4" />
-                        <span>Manage Team</span>
+                        <span className="hidden sm:inline">Manage Team</span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
+                    <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
                       <DialogTitle>Manage Team Members</DialogTitle>
                       <DialogDescription>
                         Add or remove team members from this project.
                       </DialogDescription>
-                      <div className="space-y-4">
-                        {isLoadingUsers ? (
-                          <div className="flex justify-center items-center py-8">
-                            <Spinner />
-                          </div>
-                        ) : (
-                          <>
-                            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                              {allUsers.map((user) => (
-                                <div
-                                  key={user.id}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <Checkbox
-                                    id={user.id}
-                                    checked={selectedUsers.includes(user.id)}
-                                    onCheckedChange={(checked) =>
-                                      handleUserToggle(user.id, checked)
-                                    }
-                                  />
-                                  <label
-                                    htmlFor={user.id}
-                                    className="text-sm font-medium leading-none"
-                                  >
-                                    {user.name} ({user.email}) - {user.role}
-                                  </label>
-                                </div>
-                              ))}
+                      <div className="flex-1 overflow-y-auto pr-1">
+                        <div className="space-y-4">
+                          {isLoadingUsers ? (
+                            <div className="flex justify-center items-center py-8">
+                              <Spinner />
                             </div>
-                            <Button
-                              onClick={handleAssignUsers}
-                              className="w-full"
-                              disabled={!hasTeamChanges || isUpdatingTeam}
-                            >
-                              {isUpdatingTeam ? (
-                                <Spinner />
-                              ) : (
-                                "Update Team Members"
-                              )}
-                            </Button>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                                {allUsers.map((user) => (
+                                  <div
+                                    key={user.id}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={user.id}
+                                      checked={selectedUsers.includes(user.id)}
+                                      onCheckedChange={(checked) =>
+                                        handleUserToggle(user.id, checked)
+                                      }
+                                    />
+                                    <label
+                                      htmlFor={user.id}
+                                      className="text-sm font-medium leading-none"
+                                    >
+                                      {user.name} ({user.email}) - {user.role}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                              <Button
+                                onClick={handleAssignUsers}
+                                className="w-full"
+                                disabled={!hasTeamChanges || isUpdatingTeam}
+                              >
+                                {isUpdatingTeam ? (
+                                  <Spinner />
+                                ) : (
+                                  "Update Team Members"
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -247,15 +253,16 @@ export default function ProjectPage() {
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive">
                         <Trash2 className="h-4 w-4" />
-                        <span>Delete</span>
+                        <span className="hidden md:inline">Delete</span>
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the project
-                          &ldquo;{project.projectName}&rdquo; and remove all associated data.
+                          This action cannot be undone. This will permanently
+                          delete the project &ldquo;{project.projectName}&rdquo;
+                          and remove all associated data.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

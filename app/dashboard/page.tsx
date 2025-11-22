@@ -67,15 +67,17 @@ export default function DashboardPage() {
                   <span>Add Project</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogTitle>Create New Project</DialogTitle>
                 <DialogDescription>Add a new project to your dashboard.</DialogDescription>
-                <CreateProjectForm
-                  onSuccess={() => {
-                    loadProjects();
-                    setCreateDialogOpen(false);
-                  }}
-                />
+                <div className="flex-1 overflow-y-auto pr-1">
+                  <CreateProjectForm
+                    onSuccess={() => {
+                      loadProjects();
+                      setCreateDialogOpen(false);
+                    }}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
           )}

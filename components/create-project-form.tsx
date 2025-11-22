@@ -124,8 +124,8 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <FieldGroup>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <FieldGroup className="space-y-6 pb-4">
         <Field>
           <FieldLabel htmlFor="projectName">Project Name *</FieldLabel>
           <Input
@@ -135,6 +135,7 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="Enter project name"
             required
+            className="w-full"
           />
         </Field>
 
@@ -146,10 +147,11 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
             onChange={(e) => setSummary(e.target.value)}
             placeholder="Enter project description or summary (optional)"
             rows={3}
+            className="resize-none"
           />
         </Field>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field>
             <FieldLabel>Planned Start Date</FieldLabel>
             <Popover>
@@ -162,7 +164,9 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {plannedStart ? format(plannedStart, "PPP") : "Pick a date"}
+                  <span className="truncate">
+                    {plannedStart ? format(plannedStart, "PPP") : "Pick a date"}
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -170,6 +174,7 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
                   mode="single"
                   selected={plannedStart}
                   onSelect={setPlannedStart}
+                  className="rounded-md border"
                 />
               </PopoverContent>
             </Popover>
@@ -187,7 +192,9 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {plannedEnd ? format(plannedEnd, "PPP") : "Pick a date"}
+                  <span className="truncate">
+                    {plannedEnd ? format(plannedEnd, "PPP") : "Pick a date"}
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -195,6 +202,7 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
                   mode="single"
                   selected={plannedEnd}
                   onSelect={setPlannedEnd}
+                  className="rounded-md border"
                 />
               </PopoverContent>
             </Popover>
@@ -203,52 +211,78 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
 
         <Field>
           <FieldLabel>Assign Team Members</FieldLabel>
-          <FieldDescription>
+          <FieldDescription className="text-sm">
             Select users to assign to this project. You can change this later.
           </FieldDescription>
-          <div className="mt-3">
+          <div className="mt-3 space-y-3">
             <Button
               type="button"
               variant="outline"
               onClick={loadUsers}
               disabled={usersLoaded || isLoadingUsers}
+              className="w-full sm:w-auto"
             >
               {isLoadingUsers ? <Spinner /> : usersLoaded ? "Users Loaded" : "Load Users"}
             </Button>
             {allUsers.length > 0 && (
-              <div className="mt-4 space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                {allUsers.map((user) => (
-                  <div key={user.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={user.id}
-                      checked={selectedUsers.includes(user.id)}
-                      onCheckedChange={(checked) =>
-                        handleUserToggle(user.id, checked as boolean)
-                      }
-                    />
-                    <label
-                      htmlFor={user.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {user.name} ({user.email}) - {user.role}
-                    </label>
+              <div className="border rounded-md">
+                <div className="p-3 border-b bg-muted/30">
+                  <div className="flex items-center justify-between text-sm font-medium">
+                    <span>Select team members</span>
+                    <span className="text-muted-foreground">
+                      {selectedUsers.length} selected
+                    </span>
                   </div>
-                ))}
+                </div>
+                <div className="max-h-48 sm:max-h-64 overflow-y-auto p-3 space-y-3">
+                  {allUsers.map((user) => (
+                    <div key={user.id} className="flex items-start space-x-3">
+                      <Checkbox
+                        id={user.id}
+                        checked={selectedUsers.includes(user.id)}
+                        onCheckedChange={(checked) =>
+                          handleUserToggle(user.id, checked as boolean)
+                        }
+                        className="mt-0.5"
+                      />
+                      <label
+                        htmlFor={user.id}
+                        className="text-sm font-medium leading-tight cursor-pointer flex-1 min-w-0"
+                      >
+                        <div className="font-semibold">{user.name}</div>
+                        <div className="text-muted-foreground text-xs truncate">
+                          {user.email}
+                        </div>
+                        <div className="text-muted-foreground text-xs capitalize">
+                          {user.role}
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         </Field>
 
         <Field>
-          <div className="flex gap-3">
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Spinner /> : "Create Project"}
-            </Button>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </Button>
             </DialogClose>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full sm:w-auto"
+            >
+              {isPending ? <Spinner /> : "Create Project"}
+            </Button>
           </div>
         </Field>
       </FieldGroup>
