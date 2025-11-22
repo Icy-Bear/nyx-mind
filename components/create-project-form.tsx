@@ -30,6 +30,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
+// 🟢 IMPORT DateRange TYPE
+import type { DateRange } from "react-day-picker";
+
 interface User {
   id: string;
   name: string;
@@ -45,15 +48,16 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
   const [isPending, setIsPending] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [summary, setSummary] = useState("");
-  const [plannedStart, setPlannedStart] = useState<Date>();
-  const [plannedEnd, setPlannedEnd] = useState<Date>();
+
+  // 🟢 FIXED RANGE STATE
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const router = useRouter();
 
-  // Load users when component mounts
   const loadUsers = async () => {
     if (usersLoaded) return;
     try {
@@ -87,6 +91,9 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
       return;
     }
 
+    const plannedStart = dateRange?.from;
+    const plannedEnd = dateRange?.to;
+
     if (plannedStart && plannedEnd && plannedStart >= plannedEnd) {
       toast.error("Planned end date must be after start date");
       return;
@@ -95,7 +102,6 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
     try {
       setIsPending(true);
 
-      // Create the project
       const result = await createProject({
         projectName: projectName.trim(),
         summary: summary.trim() || undefined,
@@ -104,16 +110,11 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
       });
 
       if (result.success && selectedUsers.length > 0) {
-        // Assign users to the project
         await assignUsersToProject(result.projectId, selectedUsers);
       }
 
       toast.success("Project created successfully");
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.push("/dashboard");
-      }
+      onSuccess ? onSuccess() : router.push("/dashboard");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to create project"
@@ -135,7 +136,6 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="Enter project name"
             required
-            className="w-full"
           />
         </Field>
 
@@ -151,90 +151,82 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
           />
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field>
-            <FieldLabel>Planned Start Date</FieldLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
+        {/* 🔥 RANGE PICKER UI */}
+        <Field>
+          <FieldLabel>Planned Project Duration</FieldLabel>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !dateRange?.from && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+
+                <span
                   className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !plannedStart && "text-muted-foreground"
+                    "truncate max-w-[150px] sm:max-w-full",
+                    (!dateRange?.from || !dateRange?.to) &&
+                      "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  <span className="truncate">
-                    {plannedStart ? format(plannedStart, "PPP") : "Pick a date"}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={plannedStart}
-                  onSelect={setPlannedStart}
-                  className="rounded-md border"
-                />
-              </PopoverContent>
-            </Popover>
-          </Field>
+                  {dateRange?.from && dateRange?.to
+                    ? `${format(dateRange.from, "PPP")} → ${format(
+                        dateRange.to,
+                        "PPP"
+                      )}`
+                    : "Select date range"}
+                </span>
+              </Button>
+            </PopoverTrigger>
 
-          <Field>
-            <FieldLabel>Planned End Date</FieldLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !plannedEnd && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  <span className="truncate">
-                    {plannedEnd ? format(plannedEnd, "PPP") : "Pick a date"}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={plannedEnd}
-                  onSelect={setPlannedEnd}
-                  className="rounded-md border"
-                />
-              </PopoverContent>
-            </Popover>
-          </Field>
-        </div>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={1}
+                className="rounded-md border"
+              />
+            </PopoverContent>
+          </Popover>
+        </Field>
 
+        {/* TEAM MEMBER SELECTION */}
         <Field>
           <FieldLabel>Assign Team Members</FieldLabel>
           <FieldDescription className="text-sm">
             Select users to assign to this project. You can change this later.
           </FieldDescription>
+
           <div className="mt-3 space-y-3">
             <Button
               type="button"
               variant="outline"
               onClick={loadUsers}
               disabled={usersLoaded || isLoadingUsers}
-              className="w-full sm:w-auto"
             >
-              {isLoadingUsers ? <Spinner /> : usersLoaded ? "Users Loaded" : "Load Users"}
+              {isLoadingUsers ? (
+                <Spinner />
+              ) : usersLoaded ? (
+                "Users Loaded"
+              ) : (
+                "Load Users"
+              )}
             </Button>
+
             {allUsers.length > 0 && (
               <div className="border rounded-md">
-                <div className="p-3 border-b bg-muted/30">
-                  <div className="flex items-center justify-between text-sm font-medium">
-                    <span>Select team members</span>
-                    <span className="text-muted-foreground">
-                      {selectedUsers.length} selected
-                    </span>
-                  </div>
+                <div className="p-3 border-b bg-muted/30 flex items-center justify-between text-sm font-medium">
+                  <span>Select team members</span>
+                  <span className="text-muted-foreground">
+                    {selectedUsers.length} selected
+                  </span>
                 </div>
-                <div className="max-h-48 sm:max-h-64 overflow-y-auto p-3 space-y-3">
+
+                <div className="max-h-64 overflow-y-auto p-3 space-y-3">
                   {allUsers.map((user) => (
                     <div key={user.id} className="flex items-start space-x-3">
                       <Checkbox
@@ -247,7 +239,7 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
                       />
                       <label
                         htmlFor={user.id}
-                        className="text-sm font-medium leading-tight cursor-pointer flex-1 min-w-0"
+                        className="text-sm font-medium cursor-pointer flex-1 min-w-0"
                       >
                         <div className="font-semibold">{user.name}</div>
                         <div className="text-muted-foreground text-xs truncate">
@@ -276,6 +268,7 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
                 Cancel
               </Button>
             </DialogClose>
+
             <Button
               type="submit"
               disabled={isPending}
