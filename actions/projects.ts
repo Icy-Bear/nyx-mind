@@ -156,6 +156,7 @@ export async function getProjectDetails(projectId: string) {
         name: user.name,
         email: user.email,
         role: user.role,
+        createdAt: user.createdAt,
       })
       .from(projectAssignees)
       .innerJoin(user, eq(projectAssignees.userId, user.id))

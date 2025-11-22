@@ -20,18 +20,19 @@ import { Project } from "@/lib/types";
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { data, isPending } = useSession();
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const fetchedProjects = await getProjects();
-        setProjects(fetchedProjects);
-      } catch (error) {
-        toast.error("Failed to load projects" + error);
-      }
-    };
+  const loadProjects = async () => {
+    try {
+      const fetchedProjects = await getProjects();
+      setProjects(fetchedProjects);
+    } catch (error) {
+      toast.error("Failed to load projects" + error);
+    }
+  };
 
+  useEffect(() => {
     loadProjects();
   }, []);
 
@@ -55,7 +56,7 @@ export default function DashboardPage() {
           </div>
 
           {data?.user.role === "admin" && (
-            <Dialog>
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Plus className="h-4 w-4" />
@@ -65,7 +66,12 @@ export default function DashboardPage() {
               <DialogContent className="sm:max-w-[500px]">
                 <DialogTitle>Create New Project</DialogTitle>
                 <DialogDescription>Add a new project to your dashboard.</DialogDescription>
-                <CreateProjectForm />
+                <CreateProjectForm
+                  onSuccess={() => {
+                    loadProjects();
+                    setCreateDialogOpen(false);
+                  }}
+                />
               </DialogContent>
             </Dialog>
           )}

@@ -15,6 +15,7 @@ export interface ProjectWithAssignees extends Project {
     name: string;
     email: string;
     role: string | null;
+    createdAt: Date;
   }>;
 }
 

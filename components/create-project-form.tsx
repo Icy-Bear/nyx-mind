@@ -37,7 +37,11 @@ interface User {
   role: string | null;
 }
 
-export function CreateProjectForm() {
+interface CreateProjectFormProps {
+  onSuccess?: () => void;
+}
+
+export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
   const [isPending, setIsPending] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [summary, setSummary] = useState("");
@@ -105,7 +109,11 @@ export function CreateProjectForm() {
       }
 
       toast.success("Project created successfully");
-      router.push("/dashboard");
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to create project"

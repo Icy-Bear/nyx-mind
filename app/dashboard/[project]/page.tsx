@@ -56,6 +56,7 @@ export default function ProjectPage() {
     name: string;
     email: string;
     role: string | null;
+    createdAt: Date;
   } | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const router = useRouter();
