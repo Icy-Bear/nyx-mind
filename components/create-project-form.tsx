@@ -8,6 +8,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   createProject,
   getAllUsers,
@@ -38,6 +39,7 @@ interface User {
 export function CreateProjectForm() {
   const [isPending, setIsPending] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [summary, setSummary] = useState("");
   const [plannedStart, setPlannedStart] = useState<Date>();
   const [plannedEnd, setPlannedEnd] = useState<Date>();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -53,7 +55,7 @@ export function CreateProjectForm() {
       setAllUsers(users);
       setUsersLoaded(true);
     } catch (error) {
-      toast.error("Failed to load users");
+      toast.error("Failed to load users" + error);
     }
   };
 
@@ -87,6 +89,7 @@ export function CreateProjectForm() {
       // Create the project
       const result = await createProject({
         projectName: projectName.trim(),
+        summary: summary.trim() || undefined,
         plannedStart,
         plannedEnd,
       });
@@ -119,6 +122,17 @@ export function CreateProjectForm() {
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="Enter project name"
             required
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="summary">Project Summary</FieldLabel>
+          <Textarea
+            id="summary"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="Enter project description or summary (optional)"
+            rows={3}
           />
         </Field>
 

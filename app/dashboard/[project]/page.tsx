@@ -46,7 +46,7 @@ export default function ProjectPage() {
         const projectData = await getProjectDetails(params.project);
         setProject(projectData);
       } catch (error) {
-        toast.error("Failed to load project");
+        toast.error("Failed to load project" + error);
       } finally {
         setLoading(false);
       }
@@ -68,7 +68,7 @@ export default function ProjectPage() {
       setAllUsers(users);
       setSelectedUsers(project?.assignees.map((a) => a.id) || []);
     } catch (error) {
-      toast.error("Failed to load users");
+      toast.error("Failed to load users" + error);
     }
   };
 
@@ -91,7 +91,7 @@ export default function ProjectPage() {
       const updatedProject = await getProjectDetails(params.project);
       setProject(updatedProject);
     } catch (error) {
-      toast.error("Failed to update team members");
+      toast.error("Failed to update team members" + error);
     }
   };
 

@@ -7,7 +7,7 @@ import { FolderKanban, Plus } from "lucide-react";
 import { getProjects } from "@/actions/projects";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import CreateProjectForm from "./create/page";
+import { CreateProjectForm } from "@/components/create-project-form";
 import { useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { Project } from "@/lib/types";
@@ -22,7 +22,7 @@ export default function DashboardPage() {
         const fetchedProjects = await getProjects();
         setProjects(fetchedProjects);
       } catch (error) {
-        toast.error("Failed to load projects");
+        toast.error("Failed to load projects" + error);
       }
     };
 
@@ -76,9 +76,9 @@ export default function DashboardPage() {
         <></>
       )}
 
-       <div>
-         <ProjectCards projects={projects} />
-       </div>
+      <div>
+        <ProjectCards projects={projects} />
+      </div>
     </div>
   );
 }

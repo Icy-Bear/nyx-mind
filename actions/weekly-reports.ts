@@ -36,7 +36,7 @@ export async function saveWeeklyReport(data: {
       .where(
         and(
           eq(weeklyReports.userId, userId),
-          eq(weeklyReports.weekStartDate, data.weekStartDate)
+          eq(weeklyReports.weekStartDate, data.weekStartDate.toISOString().split('T')[0])
         )
       )
       .limit(1);
@@ -56,7 +56,7 @@ export async function saveWeeklyReport(data: {
         .insert(weeklyReports)
         .values({
           userId,
-          weekStartDate: data.weekStartDate,
+          weekStartDate: data.weekStartDate.toISOString().split('T')[0],
         })
         .returning({ id: weeklyReports.id });
 
@@ -112,7 +112,7 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
       .where(
         and(
           eq(weeklyReports.userId, currentUserId),
-          eq(weeklyReports.weekStartDate, weekStartDate)
+          eq(weeklyReports.weekStartDate, weekStartDate.toISOString().split('T')[0])
         )
       )
       .limit(1);

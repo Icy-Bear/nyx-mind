@@ -37,7 +37,7 @@ export async function createProject(data: {
 
     revalidatePath("/dashboard");
 
-    return { success: true };
+    return { success: true, projectId };
   } catch (error) {
     console.error("Error creating project:", error);
     if (error instanceof Error) {

@@ -68,7 +68,6 @@ interface HeaderLeaveDialogProps {
 }
 
 export function HeaderLeaveDialog({ onSuccess }: HeaderLeaveDialogProps) {
-  const [open, setOpen] = React.useState<boolean>(false);
   const [isPending, setIsPending] = React.useState<boolean>(false);
 
   const form = ReactHookForm.useForm<ApplyLeave>({
@@ -93,7 +92,6 @@ export function HeaderLeaveDialog({ onSuccess }: HeaderLeaveDialogProps) {
 
       toast.success("Leave application submitted successfully");
       form.reset();
-      setOpen(false);
       onSuccess?.();
     } catch (err) {
       if (err instanceof Error) {
