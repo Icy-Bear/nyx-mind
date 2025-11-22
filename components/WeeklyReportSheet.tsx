@@ -48,6 +48,17 @@ import {
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 import { getWeeklyReport, saveDailyEntry } from "@/actions/weekly-reports";
+
+// Day mapping constant (matches database values)
+const DAY_MAPPING = {
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+  sun: 0,
+};
 import { getProjects } from "@/actions/projects";
 import { toast } from "sonner";
 
@@ -173,24 +184,24 @@ export function WeeklyReportSheet({
   }, [selectedDate, member, userProjects]);
 
   const [hours, setHours] = useState<Record<string, number>>({
-    mon: 4,
-    tue: 2,
-    wed: 6,
-    thu: 3,
-    fri: 4,
+    mon: 0,
+    tue: 0,
+    wed: 0,
+    thu: 0,
+    fri: 0,
     sat: 0,
     sun: 0,
   });
 
   // NEW: Daily project selection state
   const [projects, setProjects] = useState<Record<string, string>>({
-    mon: "nivaas",
-    tue: "nivaas",
-    wed: "nivaas",
-    thu: "nivaas",
-    fri: "nivaas",
-    sat: "nivaas",
-    sun: "nivaas",
+    mon: "none",
+    tue: "none",
+    wed: "none",
+    thu: "none",
+    fri: "none",
+    sat: "none",
+    sun: "none",
   });
 
   const updateProject = (dayKey: string, value: string) => {
@@ -257,34 +268,6 @@ export function WeeklyReportSheet({
     });
   };
 
-  const applyProjectToSelectedDays = () => {
-    if (selectedDays.size === 0) {
-      toast.error("Please select at least one day");
-      return;
-    }
-
-    selectedDays.forEach((dayKey) => {
-      updateProject(dayKey, quickProject);
-    });
-
-    toast.success(
-      `Applied project to ${selectedDays.size} day${
-        selectedDays.size > 1 ? "s" : ""
-      }`
-    );
-    setSelectedDays(new Set());
-    setBulkMode(false);
-  };
-
-  const selectAllDays = () => {
-    const allDays = new Set(DAYS.map((d) => d.key));
-    setSelectedDays(allDays);
-  };
-
-  const clearSelection = () => {
-    setSelectedDays(new Set());
-  };
-
   const getProjectColor = (projectId: string) => {
     if (projectId === "none")
       return "bg-gray-100 text-gray-700 border-gray-200";
@@ -325,14 +308,15 @@ export function WeeklyReportSheet({
     setIsSaving(true);
     try {
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-      const dayIndex = DAYS.findIndex((d) => d.key === editingDay);
-      const dayOfWeek = dayIndex;
+      // Use DAY_MAPPING to get correct day number (mon=1, tue=2, ..., sun=0)
+      const dayOfWeek = DAY_MAPPING[editingDay as keyof typeof DAY_MAPPING];
 
       await saveDailyEntry({
         weekStartDate: weekStart,
         dayOfWeek,
         hours: hours[editingDay],
-        projectName: projects[editingDay] || "",
+        projectName:
+          projects[editingDay] === "none" ? "" : projects[editingDay],
         description: descriptions[editingDay] || "",
       });
 

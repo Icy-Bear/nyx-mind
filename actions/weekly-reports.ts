@@ -144,7 +144,7 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
     // Initialize with defaults
     Object.keys(DAY_MAPPING).forEach(dayKey => {
       hours[dayKey] = 0;
-      projects[dayKey] = "nivaas"; // Default project
+      projects[dayKey] = "none"; // Default project
       descriptions[dayKey] = "";
     });
 
@@ -155,7 +155,7 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
       );
       if (dayKey) {
         hours[dayKey] = parseFloat(entry.hours);
-        projects[dayKey] = entry.projectName;
+        projects[dayKey] = entry.projectName || "none"; // Convert empty string to "none"
         descriptions[dayKey] = entry.description || "";
       }
     });
