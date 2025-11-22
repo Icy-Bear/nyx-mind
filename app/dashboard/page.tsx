@@ -21,14 +21,18 @@ import { Project } from "@/lib/types";
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const { data, isPending } = useSession();
 
   const loadProjects = async () => {
+    setIsLoadingProjects(true);
     try {
       const fetchedProjects = await getProjects();
       setProjects(fetchedProjects);
     } catch (error) {
       toast.error("Failed to load projects" + error);
+    } finally {
+      setIsLoadingProjects(false);
     }
   };
 
@@ -87,7 +91,13 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <ProjectCards projects={projects} role={data?.user.role as string} />
+        {isLoadingProjects ? (
+          <div className="flex justify-center items-center py-12">
+            <Spinner />
+          </div>
+        ) : (
+          <ProjectCards projects={projects} role={data?.user.role as string} />
+        )}
       </div>
     </div>
   );
