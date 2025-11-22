@@ -4,6 +4,7 @@ import {
   getProjectDetails,
   assignUsersToProject,
   getAllUsers,
+  deleteProject,
 } from "@/actions/projects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +13,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
-import { UserPlus, Calendar, Users } from "lucide-react";
+import { UserPlus, Calendar, Users, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -23,7 +35,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ProjectWithAssignees, User } from "@/lib/types";
 import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
 import { usePageTitle } from "@/contexts/page-title-context";
@@ -33,9 +45,12 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [initialSelectedUsers, setInitialSelectedUsers] = useState<string[]>([]);
+  const [initialSelectedUsers, setInitialSelectedUsers] = useState<string[]>(
+    []
+  );
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{
     id: string;
     name: string;
@@ -43,6 +58,7 @@ export default function ProjectPage() {
     role: string | null;
   } | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const router = useRouter();
 
   const { data: session } = useSession();
   const { setTitle } = usePageTitle();
@@ -114,6 +130,20 @@ export default function ProjectPage() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    if (!project) return;
+    try {
+      setIsDeletingProject(true);
+      await deleteProject(project.id);
+      toast.success("Project deleted successfully");
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error("Failed to delete project" + error);
+    } finally {
+      setIsDeletingProject(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
@@ -130,7 +160,9 @@ export default function ProjectPage() {
   });
 
   // Check if team members have changed
-  const hasTeamChanges = JSON.stringify(selectedUsers.sort()) !== JSON.stringify(initialSelectedUsers.sort());
+  const hasTeamChanges =
+    JSON.stringify(selectedUsers.sort()) !==
+    JSON.stringify(initialSelectedUsers.sort());
 
   return (
     <>
@@ -147,61 +179,98 @@ export default function ProjectPage() {
               </div>
 
               {isAdmin && (
-                <Dialog
-                  onOpenChange={async (open) => {
-                    if (open) await loadUsers();
-                  }}
-                >
-                  <DialogTrigger asChild>
-                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                      <UserPlus className="h-4 w-4" />
-                      <span>Manage Team</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogTitle>Manage Team Members</DialogTitle>
-                    <DialogDescription>Add or remove team members from this project.</DialogDescription>
-                    <div className="space-y-4">
-                      {isLoadingUsers ? (
-                        <div className="flex justify-center items-center py-8">
-                          <Spinner />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                            {allUsers.map((user) => (
-                              <div
-                                key={user.id}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={user.id}
-                                  checked={selectedUsers.includes(user.id)}
-                                  onCheckedChange={(checked) =>
-                                    handleUserToggle(user.id, checked)
-                                  }
-                                />
-                                <label
-                                  htmlFor={user.id}
-                                  className="text-sm font-medium leading-none"
-                                >
-                                  {user.name} ({user.email}) - {user.role}
-                                </label>
-                              </div>
-                            ))}
+                <div className="flex gap-2">
+                  <Dialog
+                    onOpenChange={async (open) => {
+                      if (open) await loadUsers();
+                    }}
+                  >
+                    <DialogTrigger asChild>
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <UserPlus className="h-4 w-4" />
+                        <span>Manage Team</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]">
+                      <DialogTitle>Manage Team Members</DialogTitle>
+                      <DialogDescription>
+                        Add or remove team members from this project.
+                      </DialogDescription>
+                      <div className="space-y-4">
+                        {isLoadingUsers ? (
+                          <div className="flex justify-center items-center py-8">
+                            <Spinner />
                           </div>
-                          <Button
-                            onClick={handleAssignUsers}
-                            className="w-full"
-                            disabled={!hasTeamChanges || isUpdatingTeam}
-                          >
-                            {isUpdatingTeam ? <Spinner /> : "Update Team Members"}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                        ) : (
+                          <>
+                            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                              {allUsers.map((user) => (
+                                <div
+                                  key={user.id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={user.id}
+                                    checked={selectedUsers.includes(user.id)}
+                                    onCheckedChange={(checked) =>
+                                      handleUserToggle(user.id, checked)
+                                    }
+                                  />
+                                  <label
+                                    htmlFor={user.id}
+                                    className="text-sm font-medium leading-none"
+                                  >
+                                    {user.name} ({user.email}) - {user.role}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                            <Button
+                              onClick={handleAssignUsers}
+                              className="w-full"
+                              disabled={!hasTeamChanges || isUpdatingTeam}
+                            >
+                              {isUpdatingTeam ? (
+                                <Spinner />
+                              ) : (
+                                "Update Team Members"
+                              )}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete the project "{project.projectName}" and remove
+                          all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteProject}
+                          disabled={isDeletingProject}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {isDeletingProject ? <Spinner /> : "Delete Project"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
             </div>
           </div>

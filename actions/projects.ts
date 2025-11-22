@@ -242,3 +242,36 @@ export async function getAllUsers() {
     throw new Error("Failed to fetch users");
   }
 }
+
+export async function deleteProject(projectId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || session.user.role !== "admin") {
+      throw new Error("Unauthorized - Admin access required");
+    }
+
+    // Delete project assignments first (foreign key constraint)
+    await db
+      .delete(projectAssignees)
+      .where(eq(projectAssignees.projectId, projectId));
+
+    // Delete the project
+    await db
+      .delete(projects)
+      .where(eq(projects.id, projectId));
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/dashboard/${projectId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to delete project");
+  }
+}
