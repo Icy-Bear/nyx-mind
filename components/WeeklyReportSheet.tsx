@@ -25,8 +25,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
-import { ChevronLeft, ChevronRight, Clock, Save, Activity, Edit } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Save, Activity, Edit, CalendarIcon, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 
@@ -49,6 +55,7 @@ export function WeeklyReportSheet({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const [hours, setHours] = useState<Record<string, number>>({
     mon: 4,
@@ -118,6 +125,15 @@ export function WeeklyReportSheet({
     setDescriptions((prev) => ({ ...prev, [dayKey]: text }));
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      // Set to the start of the week containing the selected date
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+      setSelectedDate(weekStart);
+      setCalendarOpen(false);
+    }
+  };
+
   if (!member) return null;
 
   return (
@@ -167,18 +183,28 @@ export function WeeklyReportSheet({
                     <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                   </Button>
 
-                  <div className="text-center">
-                    <div className="font-semibold text-lg">
-                      {format(weekStart, "MMM d")} -{" "}
-                      {format(weekEnd, "MMM d, yyyy")}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Week{" "}
-                      {Math.ceil(
-                        (selectedDate.getDate() - selectedDate.getDay() + 1) / 7
-                      )}
-                    </div>
-                  </div>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 font-semibold text-lg hover:bg-accent"
+                      >
+                        <CalendarIcon className="h-4 w-4" />
+                        {format(weekStart, "MMM d")} -{" "}
+                        {format(weekEnd, "MMM d, yyyy")}
+                        <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="center">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                        className="rounded-md border-0"
+                      />
+                    </PopoverContent>
+                  </Popover>
 
                   <Button
                     variant="outline"
@@ -193,6 +219,14 @@ export function WeeklyReportSheet({
                   >
                     Next <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
+                </div>
+                <div className="text-center mt-2">
+                  <div className="text-sm text-muted-foreground">
+                    Week{" "}
+                    {Math.ceil(
+                      (selectedDate.getDate() - selectedDate.getDay() + 1) / 7
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
