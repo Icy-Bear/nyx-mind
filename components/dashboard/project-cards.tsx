@@ -8,10 +8,26 @@ import { Project } from "@/lib/types";
 
 interface ProjectCardsProps {
   projects: Project[];
+  role: string;
 }
 
-export function ProjectCards({ projects }: ProjectCardsProps) {
+export function ProjectCards({ projects, role }: ProjectCardsProps) {
   const router = useRouter();
+
+  if (projects.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        {role === "admin" ? (
+          <p className="text-gray-400">create a project</p>
+        ) : (
+          <p className="text-gray-400">
+            {" "}
+            you are not assigned to a project yet
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -26,15 +42,22 @@ export function ProjectCards({ projects }: ProjectCardsProps) {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
                 <FolderOpen className="h-5 w-5 text-primary" />
-                <CardTitle className="capitalize text-lg">{p.projectName}</CardTitle>
+                <CardTitle className="capitalize text-lg">
+                  {p.projectName}
+                </CardTitle>
               </div>
               <Badge variant="secondary" className="text-xs">
-                {p.status === "not_started" ? "Not Started" :
-                 p.status === "in_progress" ? "In Progress" :
-                 p.status === "on_hold" ? "On Hold" :
-                 p.status === "completed" ? "Completed" :
-                 p.status === "cancelled" ? "Cancelled" :
-                 "Not Started"}
+                {p.status === "not_started"
+                  ? "Not Started"
+                  : p.status === "in_progress"
+                  ? "In Progress"
+                  : p.status === "on_hold"
+                  ? "On Hold"
+                  : p.status === "completed"
+                  ? "Completed"
+                  : p.status === "cancelled"
+                  ? "Cancelled"
+                  : "Not Started"}
               </Badge>
             </div>
           </CardHeader>

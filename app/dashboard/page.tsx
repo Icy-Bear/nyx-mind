@@ -2,7 +2,6 @@
 
 import { ActionDialog } from "@/components/action-dialog";
 import { ProjectCards } from "@/components/dashboard/project-cards";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderKanban, Plus } from "lucide-react";
 import { getProjects } from "@/actions/projects";
 import { useEffect, useState } from "react";
@@ -70,37 +69,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {data?.user.role === "admin" ? (
-        <ProjectStatics projects={projects} />
-      ) : (
-        <></>
-      )}
-
       <div>
-        <ProjectCards projects={projects} />
+        <ProjectCards projects={projects} role={data?.user.role as string} />
       </div>
-    </div>
-  );
-}
-
-function ProjectStatics({ projects }: { projects: Project[] }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Projects</CardTitle>
-        </CardHeader>
-        <CardContent className="text-3xl font-bold">
-          {projects.length}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Active</CardTitle>
-        </CardHeader>
-        <CardContent className="text-3xl font-bold">2</CardContent>
-      </Card>
     </div>
   );
 }
