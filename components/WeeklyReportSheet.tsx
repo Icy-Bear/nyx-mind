@@ -221,6 +221,29 @@ export function WeeklyReportSheet({
                           week4: "bg-purple-50 hover:bg-purple-100 text-purple-700",
                         }}
                       />
+                      <div className="p-3 border-t bg-muted/30">
+                        <div className="text-xs font-medium text-muted-foreground mb-2 text-center">
+                          Week Colors
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></div>
+                            <span>Week 1</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded bg-green-100 border border-green-200"></div>
+                            <span>Week 2</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></div>
+                            <span>Week 3</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded bg-purple-100 border border-purple-200"></div>
+                            <span>Week 4</span>
+                          </div>
+                        </div>
+                      </div>
                     </PopoverContent>
                   </Popover>
 
