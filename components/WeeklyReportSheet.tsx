@@ -42,7 +42,6 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   Loader2,
-  CheckSquare,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
@@ -87,8 +86,7 @@ export function WeeklyReportSheet({
   const [userProjects, setUserProjects] = useState<
     Array<{ id: string; projectName: string }>
   >([]);
-  const [bulkMode, setBulkMode] = useState(false);
-  const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
+
 
   // Ensure selected date is not before user's joined date
   useEffect(() => {
@@ -254,17 +252,7 @@ export function WeeklyReportSheet({
     setDescriptions((prev) => ({ ...prev, [dayKey]: text }));
   };
 
-  const toggleDaySelection = (dayKey: string) => {
-    setSelectedDays((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(dayKey)) {
-        newSet.delete(dayKey);
-      } else {
-        newSet.add(dayKey);
-      }
-      return newSet;
-    });
-  };
+
 
   const getProjectColor = (projectId: string) => {
     if (projectId === "none")
@@ -530,20 +518,12 @@ export function WeeklyReportSheet({
                         className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 ${
                           isBeforeJoinedDate
                             ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
-                            : selectedDays.has(day.key)
-                            ? "bg-blue-100 border-blue-300 ring-2 ring-blue-200"
-                            : bulkMode
-                            ? "bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-2 border-dashed border-gray-300 hover:border-gray-400"
                             : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
                         }`}
                         onClick={() => {
                           if (isBeforeJoinedDate || isLoading) return;
-                          if (bulkMode) {
-                            toggleDaySelection(day.key);
-                          } else {
-                            setEditingDay(day.key);
-                            setDialogOpen(true);
-                          }
+                          setEditingDay(day.key);
+                          setDialogOpen(true);
                         }}
                         disabled={isLoading || isBeforeJoinedDate}
                       >
@@ -551,21 +531,7 @@ export function WeeklyReportSheet({
                           <span className="font-semibold text-sm text-blue-700">
                             {day.label}
                           </span>
-                          {bulkMode ? (
-                            <div
-                              className={`h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center ${
-                                selectedDays.has(day.key)
-                                  ? "bg-blue-500 border-blue-500"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {selectedDays.has(day.key) && (
-                                <CheckSquare className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                          ) : (
-                            <Edit className="h-3 w-3 text-blue-500 shrink-0" />
-                          )}
+                          <Edit className="h-3 w-3 text-blue-500 shrink-0" />
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {format(weekDates[index], "MMM d")}

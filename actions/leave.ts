@@ -58,52 +58,6 @@ async function calculateClBalance(
   return Math.round(currentBalance * 100) / 100;
 }
 
-// Helper function to check and update leave balances for accruals
-async function updateLeaveAccruals(userId: string) {
-  const balance = await db
-    .select()
-    .from(leaveBalances)
-    .where(eq(leaveBalances.userId, userId))
-    .limit(1);
-
-  if (balance.length === 0) {
-    // Initialize balance for new user
-    await db.insert(leaveBalances).values({
-      id: crypto.randomUUID(),
-      userId,
-      clBalance: "0", // Start with 0, accrues continuously
-      mlBalance: 12, // Initial ML
-    });
-    return;
-  }
-
-  const currentBalance = balance[0];
-  const now = new Date();
-  let updated = false;
-
-  // CL is now calculated continuously in getLeaveBalance, no need for accrual here
-
-  // Check ML accrual (yearly)
-  const lastMlAccrual = new Date(currentBalance.lastMlAccrual);
-  const yearsSinceLastAccrual = now.getFullYear() - lastMlAccrual.getFullYear();
-
-  if (yearsSinceLastAccrual > 0) {
-    const newMlBalance = currentBalance.mlBalance + yearsSinceLastAccrual * 12;
-    await db
-      .update(leaveBalances)
-      .set({
-        mlBalance: newMlBalance,
-        lastMlAccrual: now,
-        updatedAt: now,
-      })
-      .where(eq(leaveBalances.userId, userId));
-    updated = true;
-  }
-
-  if (updated) {
-    revalidatePath("/dashboard/leave");
-  }
-}
 
 export async function getLeaveBalance(userId: string) {
   try {
