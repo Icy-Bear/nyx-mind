@@ -43,7 +43,6 @@ import {
   ChevronDownIcon,
   Loader2,
   CheckSquare,
-  Square,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
@@ -90,7 +89,6 @@ export function WeeklyReportSheet({
   >([]);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
-  const [quickProject, setQuickProject] = useState<string>("none");
 
   // Ensure selected date is not before user's joined date
   useEffect(() => {
