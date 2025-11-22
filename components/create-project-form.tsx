@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { DialogClose } from "@/components/ui/dialog";
 import {
   Field,
   FieldDescription,
@@ -45,17 +46,21 @@ export function CreateProjectForm() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const router = useRouter();
 
   // Load users when component mounts
   const loadUsers = async () => {
     if (usersLoaded) return;
     try {
+      setIsLoadingUsers(true);
       const users = await getAllUsers();
       setAllUsers(users);
       setUsersLoaded(true);
     } catch (error) {
       toast.error("Failed to load users" + error);
+    } finally {
+      setIsLoadingUsers(false);
     }
   };
 
@@ -198,9 +203,9 @@ export function CreateProjectForm() {
               type="button"
               variant="outline"
               onClick={loadUsers}
-              disabled={usersLoaded}
+              disabled={usersLoaded || isLoadingUsers}
             >
-              {usersLoaded ? "Users Loaded" : "Load Users"}
+              {isLoadingUsers ? <Spinner /> : usersLoaded ? "Users Loaded" : "Load Users"}
             </Button>
             {allUsers.length > 0 && (
               <div className="mt-4 space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
@@ -231,13 +236,11 @@ export function CreateProjectForm() {
             <Button type="submit" disabled={isPending}>
               {isPending ? <Spinner /> : "Create Project"}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/dashboard")}
-            >
-              Cancel
-            </Button>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
           </div>
         </Field>
       </FieldGroup>
