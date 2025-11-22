@@ -67,7 +67,7 @@ export async function saveWeeklyReport(data: {
     const dailyEntries = Object.entries(data.hours).map(([dayKey, hours]) => ({
       weeklyReportId,
       dayOfWeek: DAY_MAPPING[dayKey as keyof typeof DAY_MAPPING],
-      hours: hours.toString(),
+      hours: hours.toFixed(2),
       projectName: data.projects[dayKey] || "",
       description: data.descriptions[dayKey] || "",
     }));
@@ -104,6 +104,12 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
     }
 
     const currentUserId = userId || session.user.id;
+    const isAdmin = session.user.role === "admin";
+
+    // If viewing another user's report, must be admin
+    if (userId && userId !== session.user.id && !isAdmin) {
+      throw new Error("Access denied - can only view your own reports");
+    }
 
     // Get the weekly report
     const reportData = await db
@@ -169,6 +175,85 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
       throw error;
     }
     throw new Error("Failed to fetch weekly report");
+  }
+}
+
+export async function saveDailyEntry(data: {
+  weekStartDate: Date;
+  dayOfWeek: number;
+  hours: number;
+  projectName: string;
+  description: string;
+}) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    const userId = session.user.id;
+
+    // Check if weekly report exists, create if not
+    const weeklyReport = await db
+      .select()
+      .from(weeklyReports)
+      .where(
+        and(
+          eq(weeklyReports.userId, userId),
+          eq(weeklyReports.weekStartDate, data.weekStartDate.toISOString().split('T')[0])
+        )
+      )
+      .limit(1);
+
+    let weeklyReportId: string;
+
+    if (weeklyReport.length === 0) {
+      // Create new weekly report
+      const newReport = await db
+        .insert(weeklyReports)
+        .values({
+          userId,
+          weekStartDate: data.weekStartDate.toISOString().split('T')[0],
+        })
+        .returning({ id: weeklyReports.id });
+
+      weeklyReportId = newReport[0].id;
+    } else {
+      weeklyReportId = weeklyReport[0].id;
+    }
+
+    // Upsert the daily entry
+    await db
+      .insert(dailyTimeEntries)
+      .values({
+        weeklyReportId,
+        dayOfWeek: data.dayOfWeek,
+        hours: data.hours.toFixed(2),
+        projectName: data.projectName,
+        description: data.description,
+      })
+      .onConflictDoUpdate({
+        target: [dailyTimeEntries.weeklyReportId, dailyTimeEntries.dayOfWeek],
+        set: {
+          hours: data.hours.toFixed(2),
+          projectName: data.projectName,
+          description: data.description,
+          updatedAt: new Date(),
+        },
+      });
+
+    revalidatePath("/dashboard");
+
+    return { success: true, weeklyReportId };
+  } catch (error) {
+    console.error("Error saving daily entry:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to save daily entry");
   }
 }
 

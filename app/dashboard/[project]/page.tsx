@@ -83,13 +83,13 @@ export default function ProjectPage() {
 
   useEffect(() => {
     if (project) {
-      setTitle(project.projectName);
+      setTitle(project.projectName || "Project Details");
     }
     return () => setTitle(null); // Clean up on unmount
   }, [project, setTitle]);
 
   const loadUsers = async () => {
-    if (allUsers.length > 0) return;
+    if (allUsers.length > 0 || isLoadingUsers) return;
     try {
       setIsLoadingUsers(true);
       const users = await getAllUsers();
@@ -98,7 +98,7 @@ export default function ProjectPage() {
       setSelectedUsers(initialUsers);
       setInitialSelectedUsers(initialUsers);
     } catch (error) {
-      toast.error("Failed to load users" + error);
+      toast.error("Failed to load users: " + error);
     } finally {
       setIsLoadingUsers(false);
     }

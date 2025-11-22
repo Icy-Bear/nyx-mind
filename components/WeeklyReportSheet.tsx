@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
-import { saveWeeklyReport, getWeeklyReport } from "@/actions/weekly-reports";
+import { getWeeklyReport, saveDailyEntry } from "@/actions/weekly-reports";
 import { getProjects } from "@/actions/projects";
 import { toast } from "sonner";
 
@@ -107,13 +107,9 @@ export function WeeklyReportSheet({
         );
       } catch (error) {
         console.error("Error loading user projects:", error);
-        // Set default projects if fetch fails
-        setUserProjects([
-          { id: "nivaas", projectName: "Nivaas" },
-          { id: "tdc", projectName: "TDC Community" },
-          { id: "mithayadarpan", projectName: "MithayaDarpan" },
-          { id: "android-app", projectName: "Android Attendance System" },
-        ]);
+        toast.error("Failed to load user projects");
+        // Set empty projects if fetch fails
+        setUserProjects([]);
       }
     };
 
@@ -128,7 +124,7 @@ export function WeeklyReportSheet({
       setIsLoading(true);
       try {
         const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-        const report = await getWeeklyReport(weekStart);
+        const report = await getWeeklyReport(weekStart, member.id);
 
         if (report) {
           setHours(report.hours);
@@ -323,20 +319,29 @@ export function WeeklyReportSheet({
     return Math.ceil((dayOfMonth + startOfMonth.getDay() - 1) / 7);
   };
 
-  const handleSave = async () => {
+  const handleSaveDay = async () => {
+    if (!editingDay) return;
+
     setIsSaving(true);
     try {
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-      await saveWeeklyReport({
+      const dayIndex = DAYS.findIndex((d) => d.key === editingDay);
+      const dayOfWeek = dayIndex;
+
+      await saveDailyEntry({
         weekStartDate: weekStart,
-        hours,
-        projects,
-        descriptions,
+        dayOfWeek,
+        hours: hours[editingDay],
+        projectName: projects[editingDay] || "",
+        description: descriptions[editingDay] || "",
       });
-      toast.success("Weekly report saved successfully!");
+
+      toast.success("Day saved successfully!");
+      setDialogOpen(false);
+      setEditingDay(null);
     } catch (error) {
-      console.error("Error saving weekly report:", error);
-      toast.error("Failed to save weekly report");
+      console.error("Error saving day:", error);
+      toast.error("Failed to save day");
     } finally {
       setIsSaving(false);
     }
@@ -505,88 +510,6 @@ export function WeeklyReportSheet({
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* QUICK PROJECT SELECTION */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5" /> Quick
-                  Project Assignment
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium block mb-2">
-                      Select Project
-                    </label>
-                    <Select
-                      value={quickProject}
-                      onValueChange={setQuickProject}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Choose a project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No project</SelectItem>
-                        {userProjects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.projectName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setBulkMode(!bulkMode)}
-                      className={bulkMode ? "bg-blue-50 border-blue-200" : ""}
-                    >
-                      {bulkMode ? (
-                        <CheckSquare className="h-4 w-4 mr-1" />
-                      ) : (
-                        <Square className="h-4 w-4 mr-1" />
-                      )}
-                      {bulkMode ? "Exit Bulk Mode" : "Bulk Select"}
-                    </Button>
-                    {bulkMode && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={selectAllDays}
-                        >
-                          Select All
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={clearSelection}
-                        >
-                          Clear
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={applyProjectToSelectedDays}
-                          disabled={selectedDays.size === 0}
-                        >
-                          Apply to {selectedDays.size} day
-                          {selectedDays.size !== 1 ? "s" : ""}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {bulkMode && (
-                  <div className="mt-3 text-sm text-muted-foreground">
-                    Click on day cards below to select/deselect them, then apply
-                    the project.
-                  </div>
-                )}
               </CardContent>
             </Card>
 
@@ -770,6 +693,7 @@ export function WeeklyReportSheet({
                     </SelectTrigger>
 
                     <SelectContent>
+                      <SelectItem value="none">No project</SelectItem>
                       {userProjects.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.projectName}
@@ -796,24 +720,25 @@ export function WeeklyReportSheet({
                 </div>
               </div>
             </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveDay} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {isSaving ? "Saving..." : "Save Day"}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
-
-        <div className="p-4 sm:p-6 border-t bg-muted/30">
-          <Button
-            className="w-full text-base sm:text-lg py-4 sm:py-6 h-auto sm:h-11"
-            size="lg"
-            onClick={handleSave}
-            disabled={isSaving || isLoading}
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 shrink-0 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 sm:h-5 sm:w-5 mr-2 shrink-0" />
-            )}
-            {isSaving ? "Saving..." : "Save Weekly Report"}
-          </Button>
-        </div>
       </SheetContent>
     </Sheet>
   );
