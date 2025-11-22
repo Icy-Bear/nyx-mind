@@ -14,7 +14,13 @@ import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
 import { UserPlus, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
-import { ActionDialog } from "@/components/action-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "next/navigation";
 import { ProjectWithAssignees, User } from "@/lib/types";
@@ -125,44 +131,49 @@ export default function ProjectPage() {
               </div>
 
               {isAdmin && (
-                <ActionDialog
-                  title="Manage Team Members"
-                  description="Add or remove team members from this project."
-                  label="Manage Team"
-                  icon={<UserPlus className="h-4 w-4" />}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                <Dialog
                   onOpenChange={async (open) => {
                     if (open) await loadUsers();
                   }}
                 >
-                  <div className="space-y-4">
-                    <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                      {allUsers.map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={user.id}
-                            checked={selectedUsers.includes(user.id)}
-                            onCheckedChange={(checked) =>
-                              handleUserToggle(user.id, checked)
-                            }
-                          />
-                          <label
-                            htmlFor={user.id}
-                            className="text-sm font-medium leading-none"
-                          >
-                            {user.name} ({user.email}) - {user.role}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                    <Button onClick={handleAssignUsers} className="w-full">
-                      Update Team Members
+                  <DialogTrigger asChild>
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                      <UserPlus className="h-4 w-4" />
+                      <span>Manage Team</span>
                     </Button>
-                  </div>
-                </ActionDialog>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogTitle>Manage Team Members</DialogTitle>
+                    <DialogDescription>Add or remove team members from this project.</DialogDescription>
+                    <div className="space-y-4">
+                      <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                        {allUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={user.id}
+                              checked={selectedUsers.includes(user.id)}
+                              onCheckedChange={(checked) =>
+                                handleUserToggle(user.id, checked)
+                              }
+                            />
+                            <label
+                              htmlFor={user.id}
+                              className="text-sm font-medium leading-none"
+                            >
+                              {user.name} ({user.email}) - {user.role}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      <Button onClick={handleAssignUsers} className="w-full">
+                        Update Team Members
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
           </div>

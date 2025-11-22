@@ -1,7 +1,14 @@
 "use client";
 
-import { ActionDialog } from "@/components/action-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { ProjectCards } from "@/components/dashboard/project-cards";
+import { Button } from "@/components/ui/button";
 import { FolderKanban, Plus } from "lucide-react";
 import { getProjects } from "@/actions/projects";
 import { useEffect, useState } from "react";
@@ -48,15 +55,19 @@ export default function DashboardPage() {
           </div>
 
           {data?.user.role === "admin" && (
-            <ActionDialog
-              title="Create New Project"
-              description="Add a new project to your dashboard."
-              label="Add Project"
-              icon={<Plus className="h-4 w-4" />}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <CreateProjectForm />
-            </ActionDialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Plus className="h-4 w-4" />
+                  <span>Add Project</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogTitle>Create New Project</DialogTitle>
+                <DialogDescription>Add a new project to your dashboard.</DialogDescription>
+                <CreateProjectForm />
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 
