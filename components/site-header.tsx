@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
 import React from "react";
+import { usePageTitle } from "@/contexts/page-title-context";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { title: customTitle } = usePageTitle();
   const parts = pathname.split("/").filter(Boolean);
 
   const toTitle = (str: string) =>
@@ -40,7 +42,7 @@ export function SiteHeader() {
                           {isLast ? (
                             // last item -> not clickable, bold heading
                             <span className="text-xl font-semibold text-primary">
-                              {title}
+                              {customTitle || title}
                             </span>
                           ) : (
                             <BreadcrumbLink

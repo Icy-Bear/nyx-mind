@@ -3,6 +3,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { PageTitleProvider } from "@/contexts/page-title-context";
 
 export default function DashboardLayout({
   children,
@@ -18,11 +19,13 @@ export default function DashboardLayout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        {children}
-      </SidebarInset>
+      <PageTitleProvider>
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          {children}
+        </SidebarInset>
+      </PageTitleProvider>
     </SidebarProvider>
   );
 }

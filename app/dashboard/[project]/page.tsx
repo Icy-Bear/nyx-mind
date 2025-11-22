@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "next/navigation";
 import { ProjectWithAssignees, User } from "@/lib/types";
 import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
+import { usePageTitle } from "@/contexts/page-title-context";
 
 export default function ProjectPage() {
   const [project, setProject] = useState<ProjectWithAssignees | null>(null);
@@ -34,6 +35,7 @@ export default function ProjectPage() {
   const [panelOpen, setPanelOpen] = useState(false);
 
   const { data: session } = useSession();
+  const { setTitle } = usePageTitle();
   const loggedInUserId = session?.user?.id;
   const isAdmin = session?.user?.role === "admin";
   const params = useParams<{ project: string }>();
@@ -51,6 +53,13 @@ export default function ProjectPage() {
     };
     loadProject();
   }, [params.project]);
+
+  useEffect(() => {
+    if (project) {
+      setTitle(project.projectName);
+    }
+    return () => setTitle(null); // Clean up on unmount
+  }, [project, setTitle]);
 
   const loadUsers = async () => {
     if (allUsers.length > 0) return;
@@ -110,7 +119,6 @@ export default function ProjectPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold">{project.projectName}</h1>
                 <p className="text-muted-foreground mt-1">
                   Project details and team management
                 </p>
