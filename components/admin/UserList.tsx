@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,9 +38,11 @@ import {
   Calendar,
   Grid,
   List,
+  Clock,
 } from "lucide-react";
 import { SelectUser } from "@/db/schema/auth-schema";
 import { deleteUser, updateUserJoinedAt } from "@/actions/users";
+import { getUnfilledDaysCount } from "@/actions/weekly-reports";
 import { toast } from "sonner";
 
 interface UserListProps {
@@ -62,6 +64,28 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     joinedAt: Date;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [unfilledDays, setUnfilledDays] = useState<Record<string, number>>({});
+
+  // Load unfilled days for all users
+  useEffect(() => {
+    const loadUnfilledDays = async () => {
+      const days: Record<string, number> = {};
+      for (const user of users) {
+        try {
+          const count = await getUnfilledDaysCount(user.id, new Date(user.createdAt));
+          days[user.id] = count;
+        } catch (error) {
+          console.error(`Error loading unfilled days for user ${user.id}:`, error);
+          days[user.id] = 0; // Default to 0 on error
+        }
+      }
+      setUnfilledDays(days);
+    };
+
+    if (users.length > 0) {
+      loadUnfilledDays();
+    }
+  }, [users]);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -285,6 +309,13 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                       </span>
                     </div>
                   )}
+
+                  <div className="flex items-center gap-2 text-xs text-orange-600">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {unfilledDays[user.id] ?? "..."} unfilled days
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -358,6 +389,10 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                             {new Date(user.createdAt).toLocaleDateString()}
                           </span>
                         )}
+                        <span className="text-xs text-orange-600 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {unfilledDays[user.id] ?? "..."} unfilled
+                        </span>
                       </div>
                     </div>
                   </div>

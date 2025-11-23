@@ -42,6 +42,7 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
@@ -77,7 +78,7 @@ export function WeeklyReportSheet({
   onOpenChange,
   member,
 }: WeeklyReportSheetProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -216,6 +217,19 @@ export function WeeklyReportSheet({
     sat: "",
     sun: "",
   });
+
+  // Helper function to compare dates ignoring time
+  const isSameDayOrBefore = (date1: Date, date2: Date) => {
+    const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+    const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+    return d1 <= d2;
+  };
+
+  const isSameDayOrAfter = (date1: Date, date2: Date) => {
+    const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+    const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+    return d1 >= d2;
+  };
 
   const DAYS = [
     { key: "mon", label: "Mon", fullLabel: "Monday" },
@@ -410,8 +424,9 @@ export function WeeklyReportSheet({
                         className="rounded-md border-0"
                         disabled={(date) => {
                           if (!member?.createdAt) return false;
-                          // Disable dates before the user's joined date
-                          return date < new Date(member.createdAt);
+                          const today = new Date();
+                          // Disable dates before the user's joined date or after today
+                          return !isSameDayOrAfter(date, new Date(member.createdAt)) || !isSameDayOrBefore(date, today);
                         }}
                         modifiers={{
                           week1: (date) => getWeekOfMonth(date) === 1,
@@ -508,30 +523,39 @@ export function WeeklyReportSheet({
                   {DAYS.map((day, index) => {
                     const dayDate = weekDates[index];
                     const isBeforeJoinedDate = member?.createdAt
-                      ? dayDate < new Date(member.createdAt)
+                      ? !isSameDayOrAfter(dayDate, new Date(member.createdAt))
                       : false;
+                    const isAfterToday = !isSameDayOrBefore(dayDate, new Date());
+                    const hasErrors = !projects[day.key] || projects[day.key] === "none" || !descriptions[day.key];
 
                     return (
                       <Button
                         key={day.key}
                         variant="outline"
-                        className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 ${
-                          isBeforeJoinedDate
+                        className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 relative ${
+                          isBeforeJoinedDate || isAfterToday
                             ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
+                            : hasErrors
+                            ? "bg-gradient-to-br from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-2 border-dashed border-red-200 hover:border-red-300"
                             : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
                         }`}
                         onClick={() => {
-                          if (isBeforeJoinedDate || isLoading) return;
+                          if (isBeforeJoinedDate || isAfterToday || isLoading) return;
                           setEditingDay(day.key);
                           setDialogOpen(true);
                         }}
-                        disabled={isLoading || isBeforeJoinedDate}
+                        disabled={isLoading || isBeforeJoinedDate || isAfterToday}
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="font-semibold text-sm text-blue-700">
                             {day.label}
                           </span>
-                          <Edit className="h-3 w-3 text-blue-500 shrink-0" />
+                          <div className="flex items-center gap-1">
+                            {hasErrors && !isBeforeJoinedDate && !isAfterToday && (
+                              <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />
+                            )}
+                            <Edit className="h-3 w-3 text-blue-500 shrink-0" />
+                          </div>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {format(weekDates[index], "MMM d")}

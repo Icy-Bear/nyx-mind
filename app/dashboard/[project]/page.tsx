@@ -6,6 +6,7 @@ import {
   getAllUsers,
   deleteProject,
 } from "@/actions/projects";
+import { getErrorDaysCount } from "@/actions/weekly-reports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,16 @@ export default function ProjectPage() {
     createdAt: Date;
   } | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [errorDays, setErrorDays] = useState<Record<string, number>>({});
+  const [errorDaysRefresh, setErrorDaysRefresh] = useState(0);
+
+  const handlePanelOpenChange = (open: boolean) => {
+    setPanelOpen(open);
+    // Refresh error days when panel closes (user might have made changes)
+    if (!open) {
+      setErrorDaysRefresh(prev => prev + 1);
+    }
+  };
   const router = useRouter();
 
   const { data: session } = useSession();
@@ -91,6 +102,27 @@ export default function ProjectPage() {
     }
     return () => setTitle(null); // Clean up on unmount
   }, [project, loading, setTitle]);
+
+  // Load error days for all assignees
+  useEffect(() => {
+    const loadErrorDays = async () => {
+      if (!project?.assignees.length) return;
+
+      const days: Record<string, number> = {};
+      for (const assignee of project.assignees) {
+        try {
+          const count = await getErrorDaysCount(assignee.id, new Date(assignee.createdAt));
+          days[assignee.id] = count;
+        } catch (error) {
+          console.error(`Error loading error days for user ${assignee.id}:`, error);
+          days[assignee.id] = 0; // Default to 0 on error
+        }
+      }
+      setErrorDays(days);
+    };
+
+    loadErrorDays();
+  }, [project?.assignees, errorDaysRefresh]);
 
   const loadUsers = async () => {
     if (allUsers.length > 0 || isLoadingUsers) return;
@@ -362,6 +394,7 @@ export default function ProjectPage() {
                       <th className="p-3 text-left font-medium">Member</th>
                       <th className="p-3 text-left font-medium">Email</th>
                       <th className="p-3 text-left font-medium">Role</th>
+                      <th className="p-3 text-left font-medium">Error Days</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -418,6 +451,12 @@ export default function ProjectPage() {
                           <td className="p-3">
                             <Badge variant="outline">{assignee.role}</Badge>
                           </td>
+
+                          <td className="p-3">
+                            <span className={`text-sm ${errorDays[assignee.id] > 0 ? 'text-red-600 font-medium' : 'text-green-600'}`}>
+                              {errorDays[assignee.id] ?? "..."}
+                            </span>
+                          </td>
                         </tr>
                       );
                     })}
@@ -436,7 +475,7 @@ export default function ProjectPage() {
       {/* MEMBER DETAILS PANEL */}
       <WeeklyReportSheet
         open={panelOpen}
-        onOpenChange={setPanelOpen}
+        onOpenChange={handlePanelOpenChange}
         member={selectedMember}
       />
     </>

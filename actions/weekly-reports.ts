@@ -2,7 +2,7 @@
 
 import { db } from "@/db/drizzle";
 import { weeklyReports, dailyTimeEntries } from "@/db/schema/weekly-report-schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, or, isNull } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -295,5 +295,135 @@ export async function getUserWeeklyReports(userId?: string, limit = 10) {
       throw error;
     }
     throw new Error("Failed to fetch weekly reports");
+  }
+}
+
+export async function getUnfilledDaysCount(userId: string, createdAt: Date) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can view other users' unfilled days, or users can view their own
+    if (session.user.id !== userId && session.user.role !== "admin") {
+      throw new Error("Access denied");
+    }
+
+    // Get all dates with time entries for this user
+    const entries = await db
+      .select({
+        date: sql`DATE(${dailyTimeEntries.createdAt})`,
+      })
+      .from(dailyTimeEntries)
+      .innerJoin(
+        weeklyReports,
+        eq(dailyTimeEntries.weeklyReportId, weeklyReports.id)
+      )
+      .where(eq(weeklyReports.userId, userId))
+      .groupBy(sql`DATE(${dailyTimeEntries.createdAt})`);
+
+    const filledDates = new Set(entries.map(e => e.date as string));
+
+    // Calculate total days from created_at to today
+    const today = new Date();
+    const startDate = new Date(createdAt);
+    startDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    let totalDays = 0;
+    let filledDays = 0;
+
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      totalDays++;
+      const dateStr = d.toISOString().split('T')[0];
+      if (filledDates.has(dateStr)) {
+        filledDays++;
+      }
+    }
+
+    return totalDays - filledDays;
+  } catch (error) {
+    console.error("Error calculating unfilled days:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to calculate unfilled days");
+  }
+}
+
+export async function getErrorDaysCount(userId: string, createdAt: Date) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can view other users' error days, or users can view their own
+    if (session.user.id !== userId && session.user.role !== "admin") {
+      throw new Error("Access denied");
+    }
+
+    // Get all daily entries for this user
+    const allEntries = await db
+      .select({
+        date: dailyTimeEntries.createdAt,
+        projectName: dailyTimeEntries.projectName,
+        description: dailyTimeEntries.description,
+      })
+      .from(dailyTimeEntries)
+      .innerJoin(
+        weeklyReports,
+        eq(dailyTimeEntries.weeklyReportId, weeklyReports.id)
+      )
+      .where(eq(weeklyReports.userId, userId));
+
+    const entriesMap = new Map<string, { projectName: string; description: string | null }>();
+    allEntries.forEach(entry => {
+      const dateObj = new Date(entry.date);
+      const dateStr = dateObj.toISOString().split('T')[0];
+      entriesMap.set(dateStr, {
+        projectName: entry.projectName,
+        description: entry.description
+      });
+    });
+
+    // Calculate days from created_at to today
+    const today = new Date();
+    const startDate = new Date(createdAt);
+    startDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    let errorDays = 0;
+
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      const entry = entriesMap.get(dateStr);
+
+      // Count as error if:
+      // 1. No entry at all, OR
+      // 2. Entry exists but missing project or description
+      if (!entry ||
+          !entry.projectName ||
+          entry.projectName === "" ||
+          !entry.description ||
+          entry.description === "") {
+        errorDays++;
+      }
+    }
+
+    return errorDays;
+  } catch (error) {
+    console.error("Error calculating error days:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to calculate error days");
   }
 }
