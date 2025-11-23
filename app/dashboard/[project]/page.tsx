@@ -409,10 +409,10 @@ export default function ProjectPage() {
                 {project.assignees.length} members
               </span>
             </div>
-
             {project.assignees.length > 0 ? (
               <div className="overflow-hidden rounded-lg border bg-card">
-                <table className="w-full text-sm">
+                {/* Desktop Table */}
+                <table className="w-full text-sm hidden md:table">
                   <thead className="bg-muted/40">
                     <tr className="border-b">
                       <th className="p-3 text-left font-medium">Member</th>
@@ -429,18 +429,10 @@ export default function ProjectPage() {
                         <tr
                           key={assignee.id}
                           className={`
-                            border-b transition 
-                            ${
-                              canOpen
-                                ? "cursor-pointer"
-                                : "opacity-70 cursor-not-allowed"
-                            }
-                            ${
-                              assignee.id === loggedInUserId
-                                ? "bg-blue-300"
-                                : ""
-                            }
-                          `}
+                border-b transition 
+                ${canOpen ? "cursor-pointer" : "opacity-70 cursor-not-allowed"}
+                ${assignee.id === loggedInUserId ? "bg-blue-300" : ""}
+              `}
                           onClick={() => {
                             if (!canOpen) {
                               toast.error("You can only view your own details");
@@ -460,6 +452,7 @@ export default function ProjectPage() {
                                   .toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
+
                             <span className="font-medium flex items-center gap-2">
                               {assignee.name}
                               {assignee.id === loggedInUserId && (
@@ -492,6 +485,73 @@ export default function ProjectPage() {
                     })}
                   </tbody>
                 </table>
+
+                {/* Mobile Grid View */}
+                <div className="md:hidden grid grid-cols-1 gap-3 p-3">
+                  {sortedAssignees.map((assignee) => {
+                    const canOpen = isAdmin || assignee.id === loggedInUserId;
+
+                    return (
+                      <div
+                        key={assignee.id}
+                        className={`p-4 border rounded-lg bg-card shadow-sm transition 
+          ${canOpen ? "cursor-pointer" : "opacity-70 cursor-not-allowed"}
+          ${assignee.id === loggedInUserId ? "bg-blue-300" : ""}
+        `}
+                        onClick={() => {
+                          if (!canOpen) {
+                            toast.error("You can only view your own details");
+                            return;
+                          }
+                          setSelectedMember(assignee);
+                          setPanelOpen(true);
+                        }}
+                      >
+                        {/* Header */}
+                        <div className="flex items-center gap-3 mb-2">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback>
+                              {assignee.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex flex-col">
+                            <span className="font-medium flex items-center gap-2">
+                              {assignee.name}
+                              {assignee.id === loggedInUserId && (
+                                <Badge variant="secondary">You</Badge>
+                              )}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {assignee.email}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Role + Error Days */}
+                        <div className="flex justify-between text-sm mt-3">
+                          <span>
+                            <Badge variant="outline">{assignee.role}</Badge>
+                          </span>
+
+                          <span
+                            className={`${
+                              errorDays[assignee.id] > 0
+                                ? "text-red-600 font-medium"
+                                : "text-green-600"
+                            }`}
+                          >
+                            {errorDays[assignee.id] ?? "..."} days
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <p className="text-muted-foreground">
