@@ -86,6 +86,7 @@ export function WeeklyReportSheet({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [userProjects, setUserProjects] = useState<
     Array<{ id: string; projectName: string }>
   >([]);
@@ -126,7 +127,7 @@ export function WeeklyReportSheet({
     loadUserProjects();
   }, [member]);
 
-  // Load weekly report data when week changes
+  // Load weekly report data when week changes or data is saved
   useEffect(() => {
     const loadWeeklyReport = async () => {
       if (!member) return;
@@ -180,7 +181,7 @@ export function WeeklyReportSheet({
     };
 
     loadWeeklyReport();
-  }, [selectedDate, member, userProjects]);
+  }, [selectedDate, member, userProjects, refreshTrigger]);
 
   const [hours, setHours] = useState<Record<string, number>>({
     mon: 0,
@@ -325,7 +326,8 @@ export function WeeklyReportSheet({
       toast.success("Day saved successfully!");
       setDialogOpen(false);
       setEditingDay(null);
-      // Trigger refresh of error days in parent component
+      // Trigger refresh of data and error days
+      setRefreshTrigger(prev => prev + 1);
       onDataSaved?.();
     } catch (error) {
       console.error("Error saving day:", error);
