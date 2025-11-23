@@ -1,7 +1,10 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { weeklyReports, dailyTimeEntries } from "@/db/schema/weekly-report-schema";
+import {
+  weeklyReports,
+  dailyTimeEntries,
+} from "@/db/schema/weekly-report-schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -9,7 +12,13 @@ import { headers } from "next/headers";
 
 // Helper to convert day keys to day numbers (Monday = 1, Sunday = 0)
 const DAY_MAPPING = {
-  mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+  sun: 0,
 };
 
 export async function saveWeeklyReport(data: {
@@ -36,7 +45,10 @@ export async function saveWeeklyReport(data: {
       .where(
         and(
           eq(weeklyReports.userId, userId),
-          eq(weeklyReports.weekStartDate, data.weekStartDate.toISOString().split('T')[0])
+          eq(
+            weeklyReports.weekStartDate,
+            data.weekStartDate.toISOString().split("T")[0]
+          )
         )
       )
       .limit(1);
@@ -56,7 +68,7 @@ export async function saveWeeklyReport(data: {
         .insert(weeklyReports)
         .values({
           userId,
-          weekStartDate: data.weekStartDate.toISOString().split('T')[0],
+          weekStartDate: data.weekStartDate.toISOString().split("T")[0],
         })
         .returning({ id: weeklyReports.id });
 
@@ -119,7 +131,10 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
       .where(
         and(
           eq(weeklyReports.userId, currentUserId),
-          eq(weeklyReports.weekStartDate, weekStartDate.toISOString().split('T')[0])
+          eq(
+            weeklyReports.weekStartDate,
+            weekStartDate.toISOString().split("T")[0]
+          )
         )
       )
       .limit(1);
@@ -143,16 +158,17 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
     const descriptions: Record<string, string> = {};
 
     // Initialize with defaults
-    Object.keys(DAY_MAPPING).forEach(dayKey => {
+    Object.keys(DAY_MAPPING).forEach((dayKey) => {
       hours[dayKey] = 0;
       projects[dayKey] = "none"; // Default project
       descriptions[dayKey] = "";
     });
 
     // Fill in actual data
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       const dayKey = Object.keys(DAY_MAPPING).find(
-        key => DAY_MAPPING[key as keyof typeof DAY_MAPPING] === entry.dayOfWeek
+        (key) =>
+          DAY_MAPPING[key as keyof typeof DAY_MAPPING] === entry.dayOfWeek
       );
       if (dayKey) {
         hours[dayKey] = parseFloat(entry.hours);
@@ -204,7 +220,10 @@ export async function saveDailyEntry(data: {
       .where(
         and(
           eq(weeklyReports.userId, userId),
-          eq(weeklyReports.weekStartDate, data.weekStartDate.toISOString().split('T')[0])
+          eq(
+            weeklyReports.weekStartDate,
+            data.weekStartDate.toISOString().split("T")[0]
+          )
         )
       )
       .limit(1);
@@ -217,7 +236,7 @@ export async function saveDailyEntry(data: {
         .insert(weeklyReports)
         .values({
           userId,
-          weekStartDate: data.weekStartDate.toISOString().split('T')[0],
+          weekStartDate: data.weekStartDate.toISOString().split("T")[0],
         })
         .returning({ id: weeklyReports.id });
 
@@ -328,7 +347,7 @@ export async function getUnfilledDaysCount(userId: string, createdAt: Date) {
       .where(eq(weeklyReports.userId, userId))
       .groupBy(sql`DATE(${dailyTimeEntries.createdAt})`);
 
-    const filledDates = new Set(entries.map(e => e.date as string));
+    const filledDates = new Set(entries.map((e) => e.date as string));
 
     // Calculate total days from created_at to today
     const today = new Date();
@@ -341,7 +360,7 @@ export async function getUnfilledDaysCount(userId: string, createdAt: Date) {
 
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
       totalDays++;
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = d.toISOString().split("T")[0];
       if (filledDates.has(dateStr)) {
         filledDays++;
       }
@@ -372,7 +391,7 @@ export async function getErrorDaysCount(userId: string, createdAt: Date) {
       throw new Error("Access denied");
     }
 
-    // Get all dates with time entries for this user (calculate actual entry dates)
+    // Fetch all filled entries with weekStartDate + dayOfWeek
     const filledEntries = await db
       .select({
         weekStartDate: weeklyReports.weekStartDate,
@@ -385,47 +404,37 @@ export async function getErrorDaysCount(userId: string, createdAt: Date) {
       )
       .where(eq(weeklyReports.userId, userId));
 
-    // Calculate the actual dates for each entry
-    const filledDateSet = new Set<string>();
-    filledEntries.forEach(entry => {
-      const weekStart = new Date(entry.weekStartDate);
-      // dayOfWeek: 0=Sunday, 1=Monday, 2=Tuesday, ..., 6=Saturday
-      // Since week starts on Monday (dayOfWeek=1), we need to adjust:
-      // Monday (1) = weekStart + 0 days
-      // Tuesday (2) = weekStart + 1 day
-      // ...
-      // Sunday (0) = weekStart + 6 days
-      const dayOffset = entry.dayOfWeek === 0 ? 6 : entry.dayOfWeek - 1;
-      const entryDate = new Date(weekStart);
-      entryDate.setDate(weekStart.getDate() + dayOffset);
-      const dateStr = entryDate.toISOString().split('T')[0];
-      filledDateSet.add(dateStr);
-    });
+    // Convert entries into actual calendar dates
+    const filledDaysSet = new Set<string>();
 
-    // Calculate total days from created_at to today
+    for (const entry of filledEntries) {
+      const actual = new Date(entry.weekStartDate);
+      actual.setDate(actual.getDate() + entry.dayOfWeek); // Mon=0 → +0, Tue=1 → +1...
+      actual.setHours(0, 0, 0, 0);
+
+      const dateStr = actual.toISOString().split("T")[0];
+      filledDaysSet.add(dateStr);
+    }
+
     const today = new Date();
-    const startDate = new Date(createdAt);
-    startDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
+    const startDate = new Date(createdAt);
+    startDate.setHours(0, 0, 0, 0);
+
     let totalDays = 0;
-    let filledDays = 0;
 
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
       totalDays++;
-      const dateStr = d.toISOString().split('T')[0];
-      if (filledDateSet.has(dateStr)) {
-        filledDays++;
-      }
     }
 
-    // Error days = total days - filled days
-    return totalDays - filledDays;
+    const filledDays = filledDaysSet.size;
+    const errorDays = totalDays - filledDays;
+
+    return errorDays < 0 ? 0 : errorDays; // prevent negative results
   } catch (error) {
     console.error("Error calculating error days:", error);
-    if (error instanceof Error) {
-      throw error;
-    }
+    if (error instanceof Error) throw error;
     throw new Error("Failed to calculate error days");
   }
 }

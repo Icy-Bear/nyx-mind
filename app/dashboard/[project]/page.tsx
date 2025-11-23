@@ -67,13 +67,13 @@ export default function ProjectPage() {
     setPanelOpen(open);
     // Refresh error days when panel closes (user might have made changes)
     if (!open) {
-      setErrorDaysRefresh(prev => prev + 1);
+      setErrorDaysRefresh((prev) => prev + 1);
     }
   };
 
   const handleDataSaved = () => {
     // Refresh error days when data is saved
-    setErrorDaysRefresh(prev => prev + 1);
+    setErrorDaysRefresh((prev) => prev + 1);
   };
   const router = useRouter();
 
@@ -116,10 +116,16 @@ export default function ProjectPage() {
       const days: Record<string, number> = {};
       for (const assignee of project.assignees) {
         try {
-          const count = await getErrorDaysCount(assignee.id, new Date(assignee.createdAt));
+          const count = await getErrorDaysCount(
+            assignee.id,
+            new Date(assignee.createdAt)
+          );
           days[assignee.id] = count;
         } catch (error) {
-          console.error(`Error loading error days for user ${assignee.id}:`, error);
+          console.error(
+            `Error loading error days for user ${assignee.id}:`,
+            error
+          );
           days[assignee.id] = 0; // Default to 0 on error
         }
       }
@@ -128,6 +134,19 @@ export default function ProjectPage() {
 
     loadErrorDays();
   }, [project?.assignees, errorDaysRefresh]);
+
+  // Listen for weekly report saved events to refresh error days
+  useEffect(() => {
+    const handleWeeklyReportSaved = () => {
+      setErrorDaysRefresh((prev) => prev + 1);
+    };
+
+    window.addEventListener("weeklyReportSaved", handleWeeklyReportSaved);
+
+    return () => {
+      window.removeEventListener("weeklyReportSaved", handleWeeklyReportSaved);
+    };
+  }, []);
 
   const loadUsers = async () => {
     if (allUsers.length > 0 || isLoadingUsers) return;
@@ -458,7 +477,13 @@ export default function ProjectPage() {
                           </td>
 
                           <td className="p-3">
-                            <span className={`text-sm ${errorDays[assignee.id] > 0 ? 'text-red-600 font-medium' : 'text-green-600'}`}>
+                            <span
+                              className={`text-sm ${
+                                errorDays[assignee.id] > 0
+                                  ? "text-red-600 font-medium"
+                                  : "text-green-600"
+                              }`}
+                            >
                               {errorDays[assignee.id] ?? "..."}
                             </span>
                           </td>
