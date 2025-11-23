@@ -88,6 +88,25 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     }
   }, [users, errorDaysRefresh]);
 
+  // Refresh error days when window gains focus or weekly report is saved
+  useEffect(() => {
+    const handleFocus = () => {
+      setErrorDaysRefresh(prev => prev + 1);
+    };
+
+    const handleWeeklyReportSaved = () => {
+      setErrorDaysRefresh(prev => prev + 1);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('weeklyReportSaved', handleWeeklyReportSaved);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('weeklyReportSaved', handleWeeklyReportSaved);
+    };
+  }, []);
+
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

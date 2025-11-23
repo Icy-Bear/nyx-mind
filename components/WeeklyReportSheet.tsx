@@ -329,6 +329,8 @@ export function WeeklyReportSheet({
       // Trigger refresh of data and error days
       setRefreshTrigger(prev => prev + 1);
       onDataSaved?.();
+      // Dispatch event to refresh error days in other components
+      window.dispatchEvent(new CustomEvent('weeklyReportSaved'));
     } catch (error) {
       console.error("Error saving day:", error);
       toast.error("Failed to save day");
