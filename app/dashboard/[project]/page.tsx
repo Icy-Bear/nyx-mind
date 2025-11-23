@@ -70,6 +70,11 @@ export default function ProjectPage() {
       setErrorDaysRefresh(prev => prev + 1);
     }
   };
+
+  const handleDataSaved = () => {
+    // Refresh error days when data is saved
+    setErrorDaysRefresh(prev => prev + 1);
+  };
   const router = useRouter();
 
   const { data: session } = useSession();
@@ -477,6 +482,7 @@ export default function ProjectPage() {
         open={panelOpen}
         onOpenChange={handlePanelOpenChange}
         member={selectedMember}
+        onDataSaved={handleDataSaved}
       />
     </>
   );

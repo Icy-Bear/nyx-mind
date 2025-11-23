@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { SelectUser } from "@/db/schema/auth-schema";
 import { deleteUser, updateUserJoinedAt } from "@/actions/users";
-import { getUnfilledDaysCount } from "@/actions/weekly-reports";
+import { getErrorDaysCount } from "@/actions/weekly-reports";
 import { toast } from "sonner";
 
 interface UserListProps {
@@ -64,28 +64,29 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     joinedAt: Date;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [unfilledDays, setUnfilledDays] = useState<Record<string, number>>({});
+  const [errorDays, setErrorDays] = useState<Record<string, number>>({});
+  const [errorDaysRefresh, setErrorDaysRefresh] = useState(0);
 
-  // Load unfilled days for all users
+  // Load error days for all users
   useEffect(() => {
-    const loadUnfilledDays = async () => {
+    const loadErrorDays = async () => {
       const days: Record<string, number> = {};
       for (const user of users) {
         try {
-          const count = await getUnfilledDaysCount(user.id, new Date(user.createdAt));
+          const count = await getErrorDaysCount(user.id, new Date(user.createdAt));
           days[user.id] = count;
         } catch (error) {
-          console.error(`Error loading unfilled days for user ${user.id}:`, error);
+          console.error(`Error loading error days for user ${user.id}:`, error);
           days[user.id] = 0; // Default to 0 on error
         }
       }
-      setUnfilledDays(days);
+      setErrorDays(days);
     };
 
     if (users.length > 0) {
-      loadUnfilledDays();
+      loadErrorDays();
     }
-  }, [users]);
+  }, [users, errorDaysRefresh]);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -122,6 +123,8 @@ export default function UserList({ users, currentUserId }: UserListProps) {
       await updateUserJoinedAt(editUser.user.id, editUser.joinedAt);
       toast.success("User joined date updated successfully");
       setEditUser(null);
+      // Refresh unfilled days in case joined date changed
+      setErrorDaysRefresh(prev => prev + 1);
     } catch {
       toast.error("Failed to update user joined date");
     } finally {
@@ -312,9 +315,9 @@ export default function UserList({ users, currentUserId }: UserListProps) {
 
                   <div className="flex items-center gap-2 text-xs text-orange-600">
                     <Clock className="h-3 w-3" />
-                    <span>
-                      {unfilledDays[user.id] ?? "..."} unfilled days
-                    </span>
+                     <span>
+                       {errorDays[user.id] ?? "..."} error days
+                     </span>
                   </div>
                 </div>
               </CardContent>
@@ -391,7 +394,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                         )}
                         <span className="text-xs text-orange-600 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {unfilledDays[user.id] ?? "..."} unfilled
+                           {errorDays[user.id] ?? "..."} errors
                         </span>
                       </div>
                     </div>

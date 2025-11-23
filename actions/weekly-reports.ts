@@ -82,6 +82,7 @@ export async function saveWeeklyReport(data: {
     }
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/users");
 
     return { success: true, weeklyReportId };
   } catch (error) {
@@ -246,6 +247,7 @@ export async function saveDailyEntry(data: {
       });
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/users");
 
     return { success: true, weeklyReportId };
   } catch (error) {
@@ -370,12 +372,11 @@ export async function getErrorDaysCount(userId: string, createdAt: Date) {
       throw new Error("Access denied");
     }
 
-    // Get all daily entries for this user
-    const allEntries = await db
+    // Get all dates with time entries for this user (calculate actual entry dates)
+    const filledEntries = await db
       .select({
-        date: dailyTimeEntries.createdAt,
-        projectName: dailyTimeEntries.projectName,
-        description: dailyTimeEntries.description,
+        weekStartDate: weeklyReports.weekStartDate,
+        dayOfWeek: dailyTimeEntries.dayOfWeek,
       })
       .from(dailyTimeEntries)
       .innerJoin(
@@ -384,41 +385,42 @@ export async function getErrorDaysCount(userId: string, createdAt: Date) {
       )
       .where(eq(weeklyReports.userId, userId));
 
-    const entriesMap = new Map<string, { projectName: string; description: string | null }>();
-    allEntries.forEach(entry => {
-      const dateObj = new Date(entry.date);
-      const dateStr = dateObj.toISOString().split('T')[0];
-      entriesMap.set(dateStr, {
-        projectName: entry.projectName,
-        description: entry.description
-      });
+    // Calculate the actual dates for each entry
+    const filledDateSet = new Set<string>();
+    filledEntries.forEach(entry => {
+      const weekStart = new Date(entry.weekStartDate);
+      // dayOfWeek: 0=Sunday, 1=Monday, 2=Tuesday, ..., 6=Saturday
+      // Since week starts on Monday (dayOfWeek=1), we need to adjust:
+      // Monday (1) = weekStart + 0 days
+      // Tuesday (2) = weekStart + 1 day
+      // ...
+      // Sunday (0) = weekStart + 6 days
+      const dayOffset = entry.dayOfWeek === 0 ? 6 : entry.dayOfWeek - 1;
+      const entryDate = new Date(weekStart);
+      entryDate.setDate(weekStart.getDate() + dayOffset);
+      const dateStr = entryDate.toISOString().split('T')[0];
+      filledDateSet.add(dateStr);
     });
 
-    // Calculate days from created_at to today
+    // Calculate total days from created_at to today
     const today = new Date();
     const startDate = new Date(createdAt);
     startDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
-    let errorDays = 0;
+    let totalDays = 0;
+    let filledDays = 0;
 
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      totalDays++;
       const dateStr = d.toISOString().split('T')[0];
-      const entry = entriesMap.get(dateStr);
-
-      // Count as error if:
-      // 1. No entry at all, OR
-      // 2. Entry exists but missing project or description
-      if (!entry ||
-          !entry.projectName ||
-          entry.projectName === "" ||
-          !entry.description ||
-          entry.description === "") {
-        errorDays++;
+      if (filledDateSet.has(dateStr)) {
+        filledDays++;
       }
     }
 
-    return errorDays;
+    // Error days = total days - filled days
+    return totalDays - filledDays;
   } catch (error) {
     console.error("Error calculating error days:", error);
     if (error instanceof Error) {

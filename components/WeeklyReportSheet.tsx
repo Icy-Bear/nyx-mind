@@ -71,12 +71,14 @@ interface WeeklyReportSheetProps {
     role: string | null;
     createdAt: Date;
   } | null;
+  onDataSaved?: () => void;
 }
 
 export function WeeklyReportSheet({
   open,
   onOpenChange,
   member,
+  onDataSaved,
 }: WeeklyReportSheetProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [editingDay, setEditingDay] = useState<string | null>(null);
@@ -323,6 +325,8 @@ export function WeeklyReportSheet({
       toast.success("Day saved successfully!");
       setDialogOpen(false);
       setEditingDay(null);
+      // Trigger refresh of error days in parent component
+      onDataSaved?.();
     } catch (error) {
       console.error("Error saving day:", error);
       toast.error("Failed to save day");
