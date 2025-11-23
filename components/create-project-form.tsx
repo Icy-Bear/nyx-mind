@@ -114,7 +114,11 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
       }
 
       toast.success("Project created successfully");
-      onSuccess ? onSuccess() : router.push("/dashboard");
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to create project"

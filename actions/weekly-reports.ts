@@ -2,7 +2,7 @@
 
 import { db } from "@/db/drizzle";
 import { weeklyReports, dailyTimeEntries } from "@/db/schema/weekly-report-schema";
-import { eq, and, desc, sql, or, isNull } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
