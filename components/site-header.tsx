@@ -10,7 +10,7 @@ import {
 import { usePathname } from "next/navigation";
 import React from "react";
 import { usePageTitle } from "@/contexts/page-title-context";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -44,9 +44,7 @@ export function SiteHeader() {
                             // last item -> not clickable, bold heading
                             <span className="text-xl font-semibold text-primary flex items-center gap-2">
                               {customTitle || title}
-                              {customTitle === "Loading..." && (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              )}
+                              {customTitle === " " && <Spinner />}
                             </span>
                           ) : (
                             <BreadcrumbLink

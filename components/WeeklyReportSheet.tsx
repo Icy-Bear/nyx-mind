@@ -60,6 +60,7 @@ const DAY_MAPPING = {
 };
 import { getProjects } from "@/actions/projects";
 import { toast } from "sonner";
+import { Spinner } from "./ui/spinner";
 
 interface WeeklyReportSheetProps {
   open: boolean;
@@ -80,7 +81,9 @@ export function WeeklyReportSheet({
   member,
   onDataSaved,
 }: WeeklyReportSheetProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -90,7 +93,6 @@ export function WeeklyReportSheet({
   const [userProjects, setUserProjects] = useState<
     Array<{ id: string; projectName: string }>
   >([]);
-
 
   // Ensure selected date is not before user's joined date
   useEffect(() => {
@@ -269,8 +271,6 @@ export function WeeklyReportSheet({
     setDescriptions((prev) => ({ ...prev, [dayKey]: text }));
   };
 
-
-
   const getProjectColor = (projectId: string) => {
     if (projectId === "none")
       return "bg-gray-100 text-gray-700 border-gray-200";
@@ -327,10 +327,10 @@ export function WeeklyReportSheet({
       setDialogOpen(false);
       setEditingDay(null);
       // Trigger refresh of data and error days
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
       onDataSaved?.();
       // Dispatch event to refresh error days in other components
-      window.dispatchEvent(new CustomEvent('weeklyReportSaved'));
+      window.dispatchEvent(new CustomEvent("weeklyReportSaved"));
     } catch (error) {
       console.error("Error saving day:", error);
       toast.error("Failed to save day");
@@ -434,7 +434,12 @@ export function WeeklyReportSheet({
                           if (!member?.createdAt) return false;
                           const today = new Date();
                           // Disable dates before the user's joined date or after today
-                          return !isSameDayOrAfter(date, new Date(member.createdAt)) || !isSameDayOrBefore(date, today);
+                          return (
+                            !isSameDayOrAfter(
+                              date,
+                              new Date(member.createdAt)
+                            ) || !isSameDayOrBefore(date, today)
+                          );
                         }}
                         modifiers={{
                           week1: (date) => getWeekOfMonth(date) === 1,
@@ -517,24 +522,23 @@ export function WeeklyReportSheet({
               <CardContent className="pt-0">
                 {isLoading && (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      Loading...
-                    </span>
+                    <Spinner />
                   </div>
                 )}
-                <div
-                  className={`grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 ${
-                    isLoading ? "opacity-50 pointer-events-none" : ""
-                  }`}
-                >
+                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {DAYS.map((day, index) => {
                     const dayDate = weekDates[index];
                     const isBeforeJoinedDate = member?.createdAt
                       ? !isSameDayOrAfter(dayDate, new Date(member.createdAt))
                       : false;
-                    const isAfterToday = !isSameDayOrBefore(dayDate, new Date());
-                    const hasErrors = !projects[day.key] || projects[day.key] === "none" || !descriptions[day.key];
+                    const isAfterToday = !isSameDayOrBefore(
+                      dayDate,
+                      new Date()
+                    );
+                    const hasErrors =
+                      !projects[day.key] ||
+                      projects[day.key] === "none" ||
+                      !descriptions[day.key];
 
                     return (
                       <Button
@@ -548,20 +552,25 @@ export function WeeklyReportSheet({
                             : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
                         }`}
                         onClick={() => {
-                          if (isBeforeJoinedDate || isAfterToday || isLoading) return;
+                          if (isBeforeJoinedDate || isAfterToday || isLoading)
+                            return;
                           setEditingDay(day.key);
                           setDialogOpen(true);
                         }}
-                        disabled={isLoading || isBeforeJoinedDate || isAfterToday}
+                        disabled={
+                          isLoading || isBeforeJoinedDate || isAfterToday
+                        }
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="font-semibold text-sm text-blue-700">
                             {day.label}
                           </span>
                           <div className="flex items-center gap-1">
-                            {hasErrors && !isBeforeJoinedDate && !isAfterToday && (
-                              <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />
-                            )}
+                            {hasErrors &&
+                              !isBeforeJoinedDate &&
+                              !isAfterToday && (
+                                <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />
+                              )}
                             <Edit className="h-3 w-3 text-blue-500 shrink-0" />
                           </div>
                         </div>

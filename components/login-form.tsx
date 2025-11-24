@@ -60,8 +60,8 @@ export function LoginForm({
           toast.error(ctx.error.message);
         },
         onSuccess: () => {
-          toast.success("Great to see you back");
           router.replace("/dashboard");
+          toast.success("Great to see you back");
         },
       }
     );

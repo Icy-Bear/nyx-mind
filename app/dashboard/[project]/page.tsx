@@ -99,7 +99,7 @@ export default function ProjectPage() {
 
   useEffect(() => {
     if (loading) {
-      setTitle("Loading...");
+      setTitle(" ");
     } else if (project) {
       setTitle(project.projectName || "Project Details");
     } else {
@@ -206,11 +206,16 @@ export default function ProjectPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="flex h-screen justify-center items-center">
+        <Spinner />
+      </div>
+    );
   }
 
   if (!project) {
-    return <div className="p-6">Project not found</div>;
+    router.replace("/dashboard");
+    return;
   }
 
   // --- SORT MEMBERS: Logged-in user first ---
@@ -431,7 +436,7 @@ export default function ProjectPage() {
                           className={`
                 border-b transition 
                 ${canOpen ? "cursor-pointer" : "opacity-70 cursor-not-allowed"}
-                ${assignee.id === loggedInUserId ? "bg-blue-300" : ""}
+                ${assignee.id === loggedInUserId ? "bg-gray-200" : ""}
               `}
                           onClick={() => {
                             if (!canOpen) {
@@ -496,7 +501,7 @@ export default function ProjectPage() {
                         key={assignee.id}
                         className={`p-4 border rounded-lg bg-card shadow-sm transition 
           ${canOpen ? "cursor-pointer" : "opacity-70 cursor-not-allowed"}
-          ${assignee.id === loggedInUserId ? "bg-blue-300" : ""}
+          ${assignee.id === loggedInUserId ? "bg-gray-200" : ""}
         `}
                         onClick={() => {
                           if (!canOpen) {
