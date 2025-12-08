@@ -106,7 +106,7 @@ export async function saveWeeklyReport(data: {
   }
 }
 
-export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
+export async function getWeeklyReport(weekStartDate: Date, userId?: string, currentProjectId?: string) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -149,7 +149,14 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string) {
     const entries = await db
       .select()
       .from(dailyTimeEntries)
-      .where(eq(dailyTimeEntries.weeklyReportId, report.id))
+      .where(
+        currentProjectId 
+          ? and(
+              eq(dailyTimeEntries.weeklyReportId, report.id),
+              eq(dailyTimeEntries.projectName, currentProjectId)
+            )
+          : eq(dailyTimeEntries.weeklyReportId, report.id)
+      )
       .orderBy(dailyTimeEntries.dayOfWeek);
 
     // Convert back to the format expected by the component
@@ -201,6 +208,7 @@ export async function saveDailyEntry(data: {
   hours: number;
   projectName: string;
   description: string;
+  currentProjectId?: string;
 }) {
   try {
     const session = await auth.api.getSession({
@@ -245,6 +253,9 @@ export async function saveDailyEntry(data: {
       weeklyReportId = weeklyReport[0].id;
     }
 
+    // Use currentProjectId if provided, otherwise use projectName from data
+    const finalProjectName = data.currentProjectId || data.projectName;
+    
     // Upsert the daily entry
     await db
       .insert(dailyTimeEntries)
@@ -252,14 +263,14 @@ export async function saveDailyEntry(data: {
         weeklyReportId,
         dayOfWeek: data.dayOfWeek,
         hours: data.hours.toFixed(2),
-        projectName: data.projectName,
+        projectName: finalProjectName,
         description: data.description,
       })
       .onConflictDoUpdate({
         target: [dailyTimeEntries.weeklyReportId, dailyTimeEntries.dayOfWeek],
         set: {
           hours: data.hours.toFixed(2),
-          projectName: data.projectName,
+          projectName: finalProjectName,
           description: data.description,
           updatedAt: new Date(),
         },

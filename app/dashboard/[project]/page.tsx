@@ -597,6 +597,8 @@ export default function ProjectPage() {
         onOpenChange={handlePanelOpenChange}
         member={selectedMember}
         onDataSaved={handleDataSaved}
+        currentProjectId={project?.id}
+        currentProjectName={project?.projectName}
       />
     </>
   );

@@ -54,10 +54,9 @@ import {
   getValidDateRange,
   isDateInAnyRange,
   getProjectDateRanges,
-  getDateRangeMessage,
   DateRange,
 } from "@/lib/project-date-utils";
-import { ProjectWithAssignees, User } from "@/lib/types";
+
 
 // Day mapping constant (matches database values)
 const DAY_MAPPING = {
@@ -81,6 +80,8 @@ interface WeeklyReportSheetProps {
     createdAt: Date;
   } | null;
   onDataSaved?: () => void;
+  currentProjectId?: string; // New prop for strict project scoping
+  currentProjectName?: string; // New prop for display
 }
 
 export function WeeklyReportSheet({
@@ -88,6 +89,8 @@ export function WeeklyReportSheet({
   onOpenChange,
   member,
   onDataSaved,
+  currentProjectId,
+  currentProjectName,
 }: WeeklyReportSheetProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -101,8 +104,6 @@ export function WeeklyReportSheet({
   const [userProjects, setUserProjects] = useState<
     Array<{ id: string; projectName: string }>
   >([]);
-  const [currentProject, setCurrentProject] =
-    useState<ProjectWithAssignees | null>(null);
   const [projectDateRanges, setProjectDateRanges] = useState<DateRange[]>([]);
 
   const [hours, setHours] = useState<Record<string, number>>({
@@ -149,24 +150,33 @@ export function WeeklyReportSheet({
       if (!member) return;
 
       try {
-        // Load user projects
-        const projects = await getProjects(member.id);
-        setUserProjects(
-          projects.map((p) => ({ id: p.id, projectName: p.projectName }))
-        );
+        if (currentProjectId && currentProjectName) {
+          // In project context - only load current project
+          const projectDetails = await getProjectDetails(currentProjectId);
+          setUserProjects([{ id: currentProjectId, projectName: currentProjectName }]);
+          
+          // Get date range for current project only
+          const ranges = getProjectDateRanges([projectDetails]);
+          setProjectDateRanges(ranges);
+        } else {
+          // In general context - load all user projects
+          const projects = await getProjects(member.id);
+          setUserProjects(
+            projects.map((p) => ({ id: p.id, projectName: p.projectName }))
+          );
 
-        // Get date ranges for all projects
-        const ranges = getProjectDateRanges(projects);
-        setProjectDateRanges(ranges);
+          // Get date ranges for all projects
+          const ranges = getProjectDateRanges(projects);
+          setProjectDateRanges(ranges);
 
-        // Load current project if we can determine it from context
-        // For now, we'll use the first project with a valid date range
-        const projectWithRange = projects.find(
-          (p) => getValidDateRange(p) !== null
-        );
-        if (projectWithRange) {
-          const projectDetails = await getProjectDetails(projectWithRange.id);
-          setCurrentProject(projectDetails);
+          // Load current project if we can determine it from context
+          // For now, we'll use first project with a valid date range
+          const projectWithRange = projects.find(
+            (p) => getValidDateRange(p) !== null
+          );
+          if (projectWithRange) {
+            // We could load project details here if needed for future features
+          }
         }
       } catch (error) {
         console.error("Error loading project data:", error);
@@ -177,7 +187,7 @@ export function WeeklyReportSheet({
     };
 
     loadProjectData();
-  }, [member]);
+  }, [member, currentProjectId, currentProjectName]);
 
   // Load weekly report data when week changes or data is saved
   useEffect(() => {
@@ -187,7 +197,7 @@ export function WeeklyReportSheet({
       setIsLoading(true);
       try {
         const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-        const report = await getWeeklyReport(weekStart, member.id);
+        const report = await getWeeklyReport(weekStart, member.id, currentProjectId);
 
         if (report) {
           setHours(report.hours);
@@ -232,7 +242,7 @@ export function WeeklyReportSheet({
     };
 
     loadWeeklyReport();
-  }, [selectedDate, member, userProjects, refreshTrigger]);
+  }, [selectedDate, member, userProjects, refreshTrigger, currentProjectId]);
 
   const DAYS = [
     { key: "mon", label: "Mon", fullLabel: "Monday" },
@@ -312,6 +322,7 @@ export function WeeklyReportSheet({
         projectName:
           projects[editingDay] === "none" ? "" : projects[editingDay],
         description: descriptions[editingDay] || "",
+        currentProjectId: currentProjectId, // Pass current project context
       });
 
       toast.success("Day saved successfully!");
@@ -351,6 +362,14 @@ export function WeeklyReportSheet({
                   {format(weekStart, "MMM d")} -{" "}
                   {format(weekEnd, "MMM d, yyyy")}
                 </span>
+                {currentProjectId && currentProjectName && (
+                  <>
+                    <span className="hidden sm:inline"> • </span>
+                    <span className="block sm:inline">
+                      Project: <span className="font-medium text-foreground">{currentProjectName}</span>
+                    </span>
+                  </>
+                )}
               </SheetDescription>
             </div>
             <Badge
@@ -667,26 +686,36 @@ export function WeeklyReportSheet({
                   <label className="text-sm font-medium block mb-2">
                     Project
                   </label>
-                  <Select
-                    value={editingDay ? projects[editingDay] ?? "none" : "none"}
-                    onValueChange={(v) => {
-                      if (!editingDay) return;
-                      updateProject(editingDay, v);
-                    }}
-                  >
-                    <SelectTrigger className="mt-0 h-10 sm:h-9">
-                      <SelectValue placeholder="Select a project" />
-                    </SelectTrigger>
+                  {currentProjectId && currentProjectName ? (
+                    // In project context - show read-only project badge
+                    <div className="mt-0 h-10 sm:h-9 flex items-center px-3 py-2 border rounded-md bg-muted/50">
+                      <Badge variant="secondary" className="font-medium">
+                        {currentProjectName}
+                      </Badge>
+                    </div>
+                  ) : (
+                    // In general context - show project dropdown
+                    <Select
+                      value={editingDay ? projects[editingDay] ?? "none" : "none"}
+                      onValueChange={(v) => {
+                        if (!editingDay) return;
+                        updateProject(editingDay, v);
+                      }}
+                    >
+                      <SelectTrigger className="mt-0 h-10 sm:h-9">
+                        <SelectValue placeholder="Select a project" />
+                      </SelectTrigger>
 
-                    <SelectContent>
-                      <SelectItem value="none">No project</SelectItem>
-                      {userProjects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.projectName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectContent>
+                        <SelectItem value="none">No project</SelectItem>
+                        {userProjects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.projectName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 {/* Description */}
