@@ -3,7 +3,6 @@ import {
   varchar,
   timestamp,
   interval,
-  numeric,
   integer,
   text,
   uuid,
@@ -35,11 +34,6 @@ export const projects = pgTable("projects", {
   actualStart: timestamp("actual_start"),
   actualEnd: timestamp("actual_end"),
   actualDuration: interval("actual_duration"),
-
-  percentComplete: numeric("percent_complete", {
-    precision: 5,
-    scale: 2,
-  }).default("0"),
 
   predecessorLag: integer("predecessor_lag"),
 

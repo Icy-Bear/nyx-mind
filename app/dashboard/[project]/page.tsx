@@ -6,7 +6,6 @@ import {
   getAllUsers,
   deleteProject,
 } from "@/actions/projects";
-import { getErrorDaysCount } from "@/actions/weekly-reports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,11 @@ import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
 import { StatusEdit } from "@/components/admin/StatusEdit";
 import { EditProjectForm } from "@/components/edit-project-form";
 import { usePageTitle } from "@/contexts/page-title-context";
+import {
+  getStatusColor,
+  getStatusLabel,
+  getStatusDescription,
+} from "@/lib/status-utils";
 
 export default function ProjectPage() {
   const [project, setProject] = useState<ProjectWithAssignees | null>(null);
@@ -64,20 +68,13 @@ export default function ProjectPage() {
     createdAt: Date;
   } | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [errorDays, setErrorDays] = useState<Record<string, number>>({});
-  const [errorDaysRefresh, setErrorDaysRefresh] = useState(0);
 
   const handlePanelOpenChange = (open: boolean) => {
     setPanelOpen(open);
-    // Refresh error days when panel closes (user might have made changes)
-    if (!open) {
-      setErrorDaysRefresh((prev) => prev + 1);
-    }
   };
 
   const handleDataSaved = () => {
-    // Refresh error days when data is saved
-    setErrorDaysRefresh((prev) => prev + 1);
+    // Data saved callback - can be used for other refresh logic if needed
   };
 
   const handleStatusUpdated = () => {
@@ -138,46 +135,6 @@ export default function ProjectPage() {
     }
     return () => setTitle(null);
   }, [project, loading, setTitle]);
-
-  // Load error days for all assignees
-  useEffect(() => {
-    const loadErrorDays = async () => {
-      if (!project?.assignees.length) return;
-
-      const days: Record<string, number> = {};
-      for (const assignee of project.assignees) {
-        try {
-          const count = await getErrorDaysCount(
-            assignee.id,
-            new Date(assignee.createdAt)
-          );
-          days[assignee.id] = count;
-        } catch (error) {
-          console.error(
-            `Error loading error days for user ${assignee.id}:`,
-            error
-          );
-          days[assignee.id] = 0;
-        }
-      }
-      setErrorDays(days);
-    };
-
-    loadErrorDays();
-  }, [project?.assignees, errorDaysRefresh]);
-
-  // Listen for weekly report saved events to refresh error days
-  useEffect(() => {
-    const handleWeeklyReportSaved = () => {
-      setErrorDaysRefresh((prev) => prev + 1);
-    };
-
-    window.addEventListener("weeklyReportSaved", handleWeeklyReportSaved);
-
-    return () => {
-      window.removeEventListener("weeklyReportSaved", handleWeeklyReportSaved);
-    };
-  }, []);
 
   const loadUsers = async () => {
     if (allUsers.length > 0 || isLoadingUsers) return;
@@ -420,8 +377,8 @@ export default function ProjectPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Status</CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">
-                    {(project.status ?? "not_started").replace("_", " ")}
+                  <Badge className={getStatusColor(project.status)}>
+                    {getStatusLabel(project.status)}
                   </Badge>
                   {isAdmin && (
                     <StatusEdit
@@ -434,43 +391,8 @@ export default function ProjectPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {project.status === "not_started" && "Project has not started yet"}
-                  {project.status === "in_progress" && "Project is currently active"}
-                  {project.status === "on_hold" && "Project is temporarily paused"}
-                  {project.status === "completed" && "Project has been completed"}
-                  {project.status === "cancelled" && "Project has been cancelled"}
+                  {getStatusDescription(project.status)}
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">End Date</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Planned
-                    </div>
-                    <div className="font-bold">
-                      {project.plannedEnd
-                        ? format(project.plannedEnd, "MMM dd")
-                        : "TBD"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Actual
-                    </div>
-                    <div className="font-bold">
-                      {project.actualEnd
-                        ? format(project.actualEnd, "MMM dd")
-                        : "TBD"}
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
@@ -506,6 +428,37 @@ export default function ProjectPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">End Date</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Planned
+                    </div>
+                    <div className="font-bold">
+                      {project.plannedEnd
+                        ? format(project.plannedEnd, "MMM dd")
+                        : "TBD"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Actual
+                    </div>
+                    <div className="font-bold">
+                      {project.actualEnd
+                        ? format(project.actualEnd, "MMM dd")
+                        : "TBD"}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* TEAM MEMBERS TABLE */}
@@ -525,9 +478,7 @@ export default function ProjectPage() {
                   <thead className="bg-muted/40">
                     <tr className="border-b">
                       <th className="p-3 text-left font-medium">Member</th>
-                      <th className="p-3 text-left font-medium">Email</th>
                       <th className="p-3 text-left font-medium">Role</th>
-                      <th className="p-3 text-left font-medium">Error Days</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -570,24 +521,8 @@ export default function ProjectPage() {
                             </span>
                           </td>
 
-                          <td className="p-3 text-muted-foreground">
-                            {assignee.email}
-                          </td>
-
                           <td className="p-3">
                             <Badge variant="outline">{assignee.role}</Badge>
-                          </td>
-
-                          <td className="p-3">
-                            <span
-                              className={`text-sm ${
-                                errorDays[assignee.id] > 0
-                                  ? "text-red-600 font-medium"
-                                  : "text-green-600"
-                              }`}
-                            >
-                              {errorDays[assignee.id] ?? "..."}
-                            </span>
                           </td>
                         </tr>
                       );
@@ -635,27 +570,12 @@ export default function ProjectPage() {
                                 <Badge variant="secondary">You</Badge>
                               )}
                             </span>
-                            <span className="text-xs text-muted-foreground">
-                              {assignee.email}
-                            </span>
                           </div>
                         </div>
 
-                        {/* Role + Error Days */}
-                        <div className="flex justify-between text-sm mt-3">
-                          <span>
-                            <Badge variant="outline">{assignee.role}</Badge>
-                          </span>
-
-                          <span
-                            className={`${
-                              errorDays[assignee.id] > 0
-                                ? "text-red-600 font-medium"
-                                : "text-green-600"
-                            }`}
-                          >
-                            {errorDays[assignee.id] ?? "..."} days
-                          </span>
+                        {/* Role */}
+                        <div className="flex justify-start text-sm mt-3">
+                          <Badge variant="outline">{assignee.role}</Badge>
                         </div>
                       </div>
                     );

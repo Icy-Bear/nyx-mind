@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen } from "lucide-react";
 import { Project } from "@/lib/types";
+import { getStatusColor, getStatusLabel } from "@/lib/status-utils";
 
 interface ProjectCardsProps {
   projects: Project[];
@@ -54,18 +55,8 @@ export function ProjectCards({ projects, role }: ProjectCardsProps) {
                   {p.projectName}
                 </CardTitle>
               </div>
-              <Badge variant="secondary" className="text-xs">
-                {p.status === "not_started"
-                  ? "Not Started"
-                  : p.status === "in_progress"
-                  ? "In Progress"
-                  : p.status === "on_hold"
-                  ? "On Hold"
-                  : p.status === "completed"
-                  ? "Completed"
-                  : p.status === "cancelled"
-                  ? "Cancelled"
-                  : "Not Started"}
+              <Badge className={`text-xs border ${getStatusColor(p.status)}`}>
+                {getStatusLabel(p.status)}
               </Badge>
             </div>
           </CardHeader>

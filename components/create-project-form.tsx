@@ -94,7 +94,12 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps = {}) {
     const plannedStart = dateRange?.from;
     const plannedEnd = dateRange?.to;
 
-    if (plannedStart && plannedEnd && plannedStart >= plannedEnd) {
+    if (!plannedStart || !plannedEnd) {
+      toast.error("Both planned start and end dates are required");
+      return;
+    }
+
+    if (plannedStart >= plannedEnd) {
       toast.error("Planned end date must be after start date");
       return;
     }

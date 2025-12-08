@@ -47,6 +47,17 @@ import {
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 import { getWeeklyReport, saveDailyEntry } from "@/actions/weekly-reports";
+import { getProjects, getProjectDetails } from "@/actions/projects";
+import { toast } from "sonner";
+import { Spinner } from "./ui/spinner";
+import {
+  getValidDateRange,
+  isDateInAnyRange,
+  getProjectDateRanges,
+  getDateRangeMessage,
+  DateRange,
+} from "@/lib/project-date-utils";
+import { ProjectWithAssignees, User } from "@/lib/types";
 
 // Day mapping constant (matches database values)
 const DAY_MAPPING = {
@@ -58,9 +69,6 @@ const DAY_MAPPING = {
   sat: 6,
   sun: 0,
 };
-import { getProjects } from "@/actions/projects";
-import { toast } from "sonner";
-import { Spinner } from "./ui/spinner";
 
 interface WeeklyReportSheetProps {
   open: boolean;
@@ -93,40 +101,82 @@ export function WeeklyReportSheet({
   const [userProjects, setUserProjects] = useState<
     Array<{ id: string; projectName: string }>
   >([]);
+  const [currentProject, setCurrentProject] =
+    useState<ProjectWithAssignees | null>(null);
+  const [projectDateRanges, setProjectDateRanges] = useState<DateRange[]>([]);
 
-  // Ensure selected date is not before user's joined date
+  const [hours, setHours] = useState<Record<string, number>>({
+    mon: 0,
+    tue: 0,
+    wed: 0,
+    thu: 0,
+    fri: 0,
+    sat: 0,
+    sun: 0,
+  });
+
+  // NEW: Daily project selection state
+  const [projects, setProjects] = useState<Record<string, string>>({
+    mon: "none",
+    tue: "none",
+    wed: "none",
+    thu: "none",
+    fri: "none",
+    sat: "none",
+    sun: "none",
+  });
+
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({
+    mon: "",
+    tue: "",
+    wed: "",
+    thu: "",
+    fri: "",
+    sat: "",
+    sun: "",
+  });
+
+  const updateProject = (dayKey: string, value: string) => {
+    setProjects((prev) => ({
+      ...prev,
+      [dayKey]: value,
+    }));
+  };
+
+  // Load current project and user projects when member changes
   useEffect(() => {
-    if (member?.createdAt && selectedDate) {
-      const joinedWeek = startOfWeek(new Date(member.createdAt), {
-        weekStartsOn: 1,
-      });
-      const currentWeek = startOfWeek(selectedDate, { weekStartsOn: 1 });
-
-      if (currentWeek < joinedWeek) {
-        setSelectedDate(joinedWeek);
-      }
-    }
-  }, [member, selectedDate]);
-
-  // Load user projects when member changes
-  useEffect(() => {
-    const loadUserProjects = async () => {
+    const loadProjectData = async () => {
       if (!member) return;
 
       try {
+        // Load user projects
         const projects = await getProjects(member.id);
         setUserProjects(
           projects.map((p) => ({ id: p.id, projectName: p.projectName }))
         );
+
+        // Get date ranges for all projects
+        const ranges = getProjectDateRanges(projects);
+        setProjectDateRanges(ranges);
+
+        // Load current project if we can determine it from context
+        // For now, we'll use the first project with a valid date range
+        const projectWithRange = projects.find(
+          (p) => getValidDateRange(p) !== null
+        );
+        if (projectWithRange) {
+          const projectDetails = await getProjectDetails(projectWithRange.id);
+          setCurrentProject(projectDetails);
+        }
       } catch (error) {
-        console.error("Error loading user projects:", error);
-        toast.error("Failed to load user projects");
-        // Set empty projects if fetch fails
+        console.error("Error loading project data:", error);
+        toast.error("Failed to load project data");
         setUserProjects([]);
+        setProjectDateRanges([]);
       }
     };
 
-    loadUserProjects();
+    loadProjectData();
   }, [member]);
 
   // Load weekly report data when week changes or data is saved
@@ -154,7 +204,6 @@ export function WeeklyReportSheet({
             sat: 0,
             sun: 0,
           });
-          // Set default project to "none" (no project selected)
           setProjects({
             mon: "none",
             tue: "none",
@@ -185,57 +234,6 @@ export function WeeklyReportSheet({
     loadWeeklyReport();
   }, [selectedDate, member, userProjects, refreshTrigger]);
 
-  const [hours, setHours] = useState<Record<string, number>>({
-    mon: 0,
-    tue: 0,
-    wed: 0,
-    thu: 0,
-    fri: 0,
-    sat: 0,
-    sun: 0,
-  });
-
-  // NEW: Daily project selection state
-  const [projects, setProjects] = useState<Record<string, string>>({
-    mon: "none",
-    tue: "none",
-    wed: "none",
-    thu: "none",
-    fri: "none",
-    sat: "none",
-    sun: "none",
-  });
-
-  const updateProject = (dayKey: string, value: string) => {
-    setProjects((prev) => ({
-      ...prev,
-      [dayKey]: value,
-    }));
-  };
-
-  const [descriptions, setDescriptions] = useState<Record<string, string>>({
-    mon: "",
-    tue: "",
-    wed: "",
-    thu: "",
-    fri: "",
-    sat: "",
-    sun: "",
-  });
-
-  // Helper function to compare dates ignoring time
-  const isSameDayOrBefore = (date1: Date, date2: Date) => {
-    const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
-    const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
-    return d1 <= d2;
-  };
-
-  const isSameDayOrAfter = (date1: Date, date2: Date) => {
-    const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
-    const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
-    return d1 >= d2;
-  };
-
   const DAYS = [
     { key: "mon", label: "Mon", fullLabel: "Monday" },
     { key: "tue", label: "Tue", fullLabel: "Tuesday" },
@@ -249,11 +247,6 @@ export function WeeklyReportSheet({
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDates = eachDayOfInterval({ start: weekStart, end: weekEnd });
-
-  // Calculate the earliest allowed week (user's joined week)
-  const earliestAllowedWeek = member?.createdAt
-    ? startOfWeek(new Date(member.createdAt), { weekStartsOn: 1 })
-    : null;
 
   const updateHours = (dayKey: string, value: number) => {
     setHours((prev) => ({
@@ -292,7 +285,6 @@ export function WeeklyReportSheet({
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      // Set to the start of the week containing the selected date
       const weekStart = startOfWeek(date, { weekStartsOn: 1 });
       setSelectedDate(weekStart);
       setCalendarOpen(false);
@@ -311,7 +303,6 @@ export function WeeklyReportSheet({
     setIsSaving(true);
     try {
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-      // Use DAY_MAPPING to get correct day number (mon=1, tue=2, ..., sun=0)
       const dayOfWeek = DAY_MAPPING[editingDay as keyof typeof DAY_MAPPING];
 
       await saveDailyEntry({
@@ -326,11 +317,8 @@ export function WeeklyReportSheet({
       toast.success("Day saved successfully!");
       setDialogOpen(false);
       setEditingDay(null);
-      // Trigger refresh of data and error days
       setRefreshTrigger((prev) => prev + 1);
       onDataSaved?.();
-      // Dispatch event to refresh error days in other components
-      window.dispatchEvent(new CustomEvent("weeklyReportSaved"));
     } catch (error) {
       console.error("Error saving day:", error);
       toast.error("Failed to save day");
@@ -388,9 +376,13 @@ export function WeeklyReportSheet({
                     size="sm"
                     className="w-full sm:w-auto"
                     disabled={
-                      earliestAllowedWeek
-                        ? weekStart <= earliestAllowedWeek
-                        : false
+                      projectDateRanges.length > 0 &&
+                      !isDateInAnyRange(
+                        new Date(
+                          selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000
+                        ),
+                        projectDateRanges
+                      )
                     }
                     onClick={() =>
                       setSelectedDate(
@@ -431,14 +423,9 @@ export function WeeklyReportSheet({
                         initialFocus
                         className="rounded-md border-0"
                         disabled={(date) => {
-                          if (!member?.createdAt) return false;
-                          const today = new Date();
-                          // Disable dates before the user's joined date or after today
-                          return (
-                            !isSameDayOrAfter(
-                              date,
-                              new Date(member.createdAt)
-                            ) || !isSameDayOrBefore(date, today)
+                          if (projectDateRanges.length === 0) return false;
+                          return !projectDateRanges.some(
+                            (range) => date >= range.start && date <= range.end
                           );
                         }}
                         modifiers={{
@@ -487,6 +474,15 @@ export function WeeklyReportSheet({
                     variant="outline"
                     size="sm"
                     className="w-full sm:w-auto"
+                    disabled={
+                      projectDateRanges.length > 0 &&
+                      !isDateInAnyRange(
+                        new Date(
+                          selectedDate.getTime() + 7 * 24 * 60 * 60 * 1000
+                        ),
+                        projectDateRanges
+                      )
+                    }
                     onClick={() =>
                       setSelectedDate(
                         new Date(
@@ -528,49 +524,53 @@ export function WeeklyReportSheet({
                 <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {DAYS.map((day, index) => {
                     const dayDate = weekDates[index];
-                    const isBeforeJoinedDate = member?.createdAt
-                      ? !isSameDayOrAfter(dayDate, new Date(member.createdAt))
-                      : false;
-                    const isAfterToday = !isSameDayOrBefore(
-                      dayDate,
-                      new Date()
-                    );
                     const hasErrors =
                       !projects[day.key] ||
                       projects[day.key] === "none" ||
                       !descriptions[day.key];
+
+                    const isDateValid =
+                      projectDateRanges.length > 0
+                        ? isDateInAnyRange(dayDate, projectDateRanges)
+                        : true;
 
                     return (
                       <Button
                         key={day.key}
                         variant="outline"
                         className={`h-auto p-3 sm:p-4 flex flex-col items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all duration-200 relative ${
-                          isBeforeJoinedDate || isAfterToday
+                          !isDateValid
                             ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
                             : hasErrors
                             ? "bg-gradient-to-br from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-2 border-dashed border-red-200 hover:border-red-300"
                             : "bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-dashed border-blue-200 hover:border-blue-300"
                         }`}
                         onClick={() => {
-                          if (isBeforeJoinedDate || isAfterToday || isLoading)
+                          if (isLoading || !isDateValid) {
+                            if (projectDateRanges.length > 0) {
+                              toast.error(
+                                "⚠️ Cannot log time outside of project date range"
+                              );
+                            } else {
+                              toast.error(
+                                "⚠️ Cannot log time - project has no date restrictions set"
+                              );
+                            }
                             return;
+                          }
                           setEditingDay(day.key);
                           setDialogOpen(true);
                         }}
-                        disabled={
-                          isLoading || isBeforeJoinedDate || isAfterToday
-                        }
+                        disabled={isLoading || !isDateValid}
                       >
                         <div className="flex items-center justify-between w-full">
                           <span className="font-semibold text-sm text-blue-700">
                             {day.label}
                           </span>
                           <div className="flex items-center gap-1">
-                            {hasErrors &&
-                              !isBeforeJoinedDate &&
-                              !isAfterToday && (
-                                <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />
-                              )}
+                            {hasErrors && (
+                              <AlertTriangle className="h-3 w-3 text-red-500 shrink-0" />
+                            )}
                             <Edit className="h-3 w-3 text-blue-500 shrink-0" />
                           </div>
                         </div>
@@ -668,17 +668,14 @@ export function WeeklyReportSheet({
                     Project
                   </label>
                   <Select
-                    value={
-                      editingDay
-                        ? projects[editingDay] || userProjects[0]?.id
-                        : userProjects[0]?.id
-                    }
-                    onValueChange={(v) =>
-                      editingDay && updateProject(editingDay, v)
-                    }
+                    value={editingDay ? projects[editingDay] ?? "none" : "none"}
+                    onValueChange={(v) => {
+                      if (!editingDay) return;
+                      updateProject(editingDay, v);
+                    }}
                   >
                     <SelectTrigger className="mt-0 h-10 sm:h-9">
-                      <SelectValue />
+                      <SelectValue placeholder="Select a project" />
                     </SelectTrigger>
 
                     <SelectContent>

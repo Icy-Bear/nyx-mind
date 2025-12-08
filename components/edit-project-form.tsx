@@ -67,8 +67,14 @@ export function EditProjectForm({ project, onSuccess, onCancel }: EditProjectFor
     const actualStart = actualDateRange?.from;
     const actualEnd = actualDateRange?.to;
 
+    // Validate that planned dates are provided
+    if (!plannedStart || !plannedEnd) {
+      toast.error("Both planned start and end dates are required");
+      return;
+    }
+
     // Validate date ranges
-    if (plannedStart && plannedEnd && plannedStart >= plannedEnd) {
+    if (plannedStart >= plannedEnd) {
       toast.error("Planned end date must be after start date");
       return;
     }

@@ -24,6 +24,15 @@ export async function createProject(data: {
       throw new Error("Unauthorized - Admin access required");
     }
 
+    // Validate that both planned start and end dates are provided
+    if (!data.plannedStart || !data.plannedEnd) {
+      throw new Error("Both planned start and end dates are required");
+    }
+
+    if (data.plannedStart >= data.plannedEnd) {
+      throw new Error("Planned end date must be after start date");
+    }
+
     const projectId = crypto.randomUUID();
 
     await db.insert(projects).values({
