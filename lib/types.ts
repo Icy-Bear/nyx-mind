@@ -5,7 +5,10 @@ export interface Project {
   status?: string | null;
   plannedStart?: Date | null;
   plannedEnd?: Date | null;
-  percentComplete?: string | null;
+  plannedDuration?: string | null;
+  actualStart?: Date | null;
+  actualEnd?: Date | null;
+  actualDuration?: string | null;
   createdAt?: Date | null;
 }
 

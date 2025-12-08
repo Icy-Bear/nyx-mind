@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
-import { UserPlus, Calendar, Users, Trash2 } from "lucide-react";
+import { Edit, UserPlus, Calendar, Users, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
@@ -39,6 +39,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useParams, useRouter } from "next/navigation";
 import { ProjectWithAssignees, User } from "@/lib/types";
 import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
+import { StatusEdit } from "@/components/admin/StatusEdit";
+import { EditProjectForm } from "@/components/edit-project-form";
 import { usePageTitle } from "@/contexts/page-title-context";
 
 export default function ProjectPage() {
@@ -52,6 +54,8 @@ export default function ProjectPage() {
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   const [selectedMember, setSelectedMember] = useState<{
     id: string;
     name: string;
@@ -74,6 +78,33 @@ export default function ProjectPage() {
   const handleDataSaved = () => {
     // Refresh error days when data is saved
     setErrorDaysRefresh((prev) => prev + 1);
+  };
+
+  const handleStatusUpdated = () => {
+    // Refresh project data when status is updated
+    const loadProject = async () => {
+      try {
+        const projectData = await getProjectDetails(params.project);
+        setProject(projectData);
+      } catch (error) {
+        toast.error("Failed to load project" + error);
+      }
+    };
+    loadProject();
+  };
+
+  const handleProjectUpdated = () => {
+    // Refresh project data when project is updated
+    const loadProject = async () => {
+      try {
+        const projectData = await getProjectDetails(params.project);
+        setProject(projectData);
+      } catch (error) {
+        toast.error("Failed to load project" + error);
+      }
+    };
+    loadProject();
+    setEditDialogOpen(false);
   };
   const router = useRouter();
 
@@ -247,6 +278,33 @@ export default function ProjectPage() {
               {isAdmin && (
                 <div className="flex gap-2">
                   <Dialog
+                    open={editDialogOpen}
+                    onOpenChange={setEditDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+                      <DialogTitle>Edit Project</DialogTitle>
+                      <DialogDescription>
+                        Update project details, dates, and status.
+                      </DialogDescription>
+                      <div className="flex-1 overflow-y-auto pr-1">
+                        {project && (
+                          <EditProjectForm
+                            project={project}
+                            onSuccess={handleProjectUpdated}
+                            onCancel={() => setEditDialogOpen(false)}
+                          />
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog
                     onOpenChange={async (open) => {
                       if (open) await loadUsers();
                     }}
@@ -347,21 +405,6 @@ export default function ProjectPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-10">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Status</CardTitle>
-                <Badge variant="secondary">
-                  {(project.status ?? "not_started").replace("_", " ")}
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {project.percentComplete || 0}%
-                </div>
-                <p className="text-xs text-muted-foreground">Complete</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Team Size</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -375,17 +418,28 @@ export default function ProjectPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Start Date
-                </CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Status</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">
+                    {(project.status ?? "not_started").replace("_", " ")}
+                  </Badge>
+                  {isAdmin && (
+                    <StatusEdit
+                      projectId={project.id}
+                      currentStatus={project.status ?? "not_started"}
+                      onStatusUpdated={handleStatusUpdated}
+                    />
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {project.plannedStart
-                    ? format(project.plannedStart, "MMM dd")
-                    : "TBD"}
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  {project.status === "not_started" && "Project has not started yet"}
+                  {project.status === "in_progress" && "Project is currently active"}
+                  {project.status === "on_hold" && "Project is temporarily paused"}
+                  {project.status === "completed" && "Project has been completed"}
+                  {project.status === "cancelled" && "Project has been cancelled"}
+                </p>
               </CardContent>
             </Card>
 
@@ -394,11 +448,61 @@ export default function ProjectPage() {
                 <CardTitle className="text-sm font-medium">End Date</CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {project.plannedEnd
-                    ? format(project.plannedEnd, "MMM dd")
-                    : "TBD"}
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Planned
+                    </div>
+                    <div className="font-bold">
+                      {project.plannedEnd
+                        ? format(project.plannedEnd, "MMM dd")
+                        : "TBD"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Actual
+                    </div>
+                    <div className="font-bold">
+                      {project.actualEnd
+                        ? format(project.actualEnd, "MMM dd")
+                        : "TBD"}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Start Date
+                </CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Planned
+                    </div>
+                    <div className="font-bold">
+                      {project.plannedStart
+                        ? format(project.plannedStart, "MMM dd")
+                        : "TBD"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Actual
+                    </div>
+                    <div className="font-bold">
+                      {project.actualStart
+                        ? format(project.actualStart, "MMM dd")
+                        : "TBD"}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

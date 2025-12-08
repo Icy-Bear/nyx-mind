@@ -72,7 +72,10 @@ export async function getProjects(userId?: string) {
           status: projects.status,
           plannedStart: projects.plannedStart,
           plannedEnd: projects.plannedEnd,
-          percentComplete: projects.percentComplete,
+          plannedDuration: projects.plannedDuration,
+          actualStart: projects.actualStart,
+          actualEnd: projects.actualEnd,
+          actualDuration: projects.actualDuration,
           createdAt: projects.createdAt,
         })
         .from(projects);
@@ -86,7 +89,10 @@ export async function getProjects(userId?: string) {
           status: projects.status,
           plannedStart: projects.plannedStart,
           plannedEnd: projects.plannedEnd,
-          percentComplete: projects.percentComplete,
+          plannedDuration: projects.plannedDuration,
+          actualStart: projects.actualStart,
+          actualEnd: projects.actualEnd,
+          actualDuration: projects.actualDuration,
           createdAt: projects.createdAt,
         })
         .from(projects)
@@ -175,6 +181,35 @@ export async function getProjectDetails(projectId: string) {
   }
 }
 
+export async function updateProjectStatus(projectId: string, status: typeof projectStatusEnum.enumValues[number]) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || session.user.role !== "admin") {
+      throw new Error("Unauthorized - Admin access required");
+    }
+
+    // Update project status
+    await db
+      .update(projects)
+      .set({ status })
+      .where(eq(projects.id, projectId));
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/dashboard/${projectId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating project status:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to update project status");
+  }
+}
+
 export async function assignUsersToProject(
   projectId: string,
   userIds: string[]
@@ -244,6 +279,63 @@ export async function getAllUsers() {
   }
 }
 
+export async function updateProject(projectId: string, data: {
+  projectName?: string;
+  summary?: string;
+  status?: typeof projectStatusEnum.enumValues[number];
+  plannedStart?: Date;
+  plannedEnd?: Date;
+  actualStart?: Date;
+  actualEnd?: Date;
+}) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || session.user.role !== "admin") {
+      throw new Error("Unauthorized - Admin access required");
+    }
+
+    // Validate date ranges
+    if (data.plannedStart && data.plannedEnd && data.plannedStart >= data.plannedEnd) {
+      throw new Error("Planned end date must be after start date");
+    }
+
+    if (data.actualStart && data.actualEnd && data.actualStart >= data.actualEnd) {
+      throw new Error("Actual end date must be after start date");
+    }
+
+    // Prepare update data
+    const updateData: Record<string, unknown> = {};
+    
+    if (data.projectName !== undefined) updateData.projectName = data.projectName;
+    if (data.summary !== undefined) updateData.summary = data.summary;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.plannedStart !== undefined) updateData.plannedStart = data.plannedStart;
+    if (data.plannedEnd !== undefined) updateData.plannedEnd = data.plannedEnd;
+    if (data.actualStart !== undefined) updateData.actualStart = data.actualStart;
+    if (data.actualEnd !== undefined) updateData.actualEnd = data.actualEnd;
+
+    // Update project
+    await db
+      .update(projects)
+      .set(updateData)
+      .where(eq(projects.id, projectId));
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/dashboard/${projectId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating project:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to update project");
+  }
+}
+
 export async function deleteProject(projectId: string) {
   try {
     const session = await auth.api.getSession({
@@ -259,7 +351,7 @@ export async function deleteProject(projectId: string) {
       .delete(projectAssignees)
       .where(eq(projectAssignees.projectId, projectId));
 
-    // Delete the project
+    // Delete project
     await db
       .delete(projects)
       .where(eq(projects.id, projectId));
