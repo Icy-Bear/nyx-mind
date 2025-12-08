@@ -105,7 +105,7 @@ export default function ProjectPage() {
     } else {
       setTitle("Project Details");
     }
-    return () => setTitle(null); // Clean up on unmount
+    return () => setTitle(null);
   }, [project, loading, setTitle]);
 
   // Load error days for all assignees
@@ -126,7 +126,7 @@ export default function ProjectPage() {
             `Error loading error days for user ${assignee.id}:`,
             error
           );
-          days[assignee.id] = 0; // Default to 0 on error
+          days[assignee.id] = 0;
         }
       }
       setErrorDays(days);
@@ -183,7 +183,7 @@ export default function ProjectPage() {
       toast.success("Team members updated successfully");
       const updatedProject = await getProjectDetails(params.project);
       setProject(updatedProject);
-      setInitialSelectedUsers(selectedUsers); // Update initial state after successful update
+      setInitialSelectedUsers(selectedUsers);
     } catch (error) {
       toast.error("Failed to update team members" + error);
     } finally {
