@@ -141,6 +141,7 @@ export async function applyLeave(data: {
   fromDate: Date;
   toDate: Date;
   reason: string;
+  userId?: string; // Optional userId for admin applications
 }) {
   try {
     const session = await auth.api.getSession({
@@ -151,7 +152,16 @@ export async function applyLeave(data: {
       throw new Error("Unauthorized");
     }
 
-    const userId = session.user.id;
+    // Determine target userId
+    let targetUserId = session.user.id;
+    
+    // If userId is provided, verify admin is applying for someone else
+    if (data.userId) {
+      if (session.user.role !== "admin") {
+        throw new Error("Only admins can apply leave for other users");
+      }
+      targetUserId = data.userId;
+    }
 
     // Validate dates
     if (data.fromDate > data.toDate) {
@@ -166,7 +176,7 @@ export async function applyLeave(data: {
     }
 
     // Check balance
-    const balance = await getLeaveBalance(userId);
+    const balance = await getLeaveBalance(targetUserId);
     const requiredBalance =
       data.leaveType === "CL"
         ? parseFloat(balance.clBalance.toString())
@@ -184,7 +194,7 @@ export async function applyLeave(data: {
 
     // Create request
     await db.insert(leaveRequests).values({
-      userId,
+      userId: targetUserId,
       leaveType: data.leaveType,
       fromDate: data.fromDate.toISOString().split("T")[0], // YYYY-MM-DD
       toDate: data.toDate.toISOString().split("T")[0],

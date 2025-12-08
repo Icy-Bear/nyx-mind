@@ -75,6 +75,34 @@ export async function deleteUser(userId: string) {
   }
 }
 
+export async function getAllUsersForLeave() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || session.user.role !== "admin") {
+      throw new Error("Unauthorized - Admin access required");
+    }
+
+    const users = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      })
+      .from(user)
+      .where(eq(user.banned, false))
+      .orderBy(user.name);
+
+    return users;
+  } catch (error) {
+    console.error("Error fetching users for leave:", error);
+    throw new Error("Failed to fetch users");
+  }
+}
+
 export async function updateUserJoinedAt(userId: string, joinedAt: Date) {
   try {
     const session = await auth.api.getSession({

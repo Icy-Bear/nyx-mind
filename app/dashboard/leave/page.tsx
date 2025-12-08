@@ -24,8 +24,11 @@ export default async function LeavePage() {
   const isAdmin = session.user.role === "admin";
 
   if (isAdmin) {
-    // Admin view
-    const pendingRequests = await getPendingLeaveRequests();
+    // Admin view - show both own balance and pending requests
+    const [pendingRequests, adminBalance] = await Promise.all([
+      getPendingLeaveRequests(),
+      getLeaveBalance(userId),
+    ]);
 
     const formattedRequests = pendingRequests.map((req) => ({
       ...req,
@@ -42,7 +45,7 @@ export default async function LeavePage() {
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">Leave Management</h1>
               <p className="text-muted-foreground text-sm sm:text-base mt-1">
-                Review and manage employee leave requests
+                Manage your leave and review employee requests
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -58,7 +61,23 @@ export default async function LeavePage() {
           </div>
         </div>
 
-        <LeaveApproval requests={formattedRequests} />
+        {/* Admin's Leave Balance */}
+        <div className="mb-6 sm:mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Your Leave Balance</h2>
+            <p className="text-muted-foreground text-sm">View and manage your own leave balance</p>
+          </div>
+          <LeaveBalance balance={adminBalance} />
+        </div>
+
+        {/* Pending Requests Section */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Pending Leave Requests</h2>
+            <p className="text-muted-foreground text-sm">Review and approve employee leave applications</p>
+          </div>
+          <LeaveApproval requests={formattedRequests} />
+        </div>
       </div>
     );
   }

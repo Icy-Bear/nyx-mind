@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,11 +38,9 @@ import {
   Calendar,
   Grid,
   List,
-  Clock,
 } from "lucide-react";
 import { SelectUser } from "@/db/schema/auth-schema";
 import { deleteUser, updateUserJoinedAt } from "@/actions/users";
-import { getErrorDaysCount } from "@/actions/weekly-reports";
 import { toast } from "sonner";
 
 interface UserListProps {
@@ -64,63 +62,33 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     joinedAt: Date;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [errorDays, setErrorDays] = useState<Record<string, number>>({});
-  const [errorDaysRefresh, setErrorDaysRefresh] = useState(0);
 
-  // Load error days for all users
-  useEffect(() => {
-    const loadErrorDays = async () => {
-      const days: Record<string, number> = {};
-      for (const user of users) {
-        try {
-          const count = await getErrorDaysCount(user.id, new Date(user.createdAt));
-          days[user.id] = count;
-        } catch (error) {
-          console.error(`Error loading error days for user ${user.id}:`, error);
-          days[user.id] = 0; // Default to 0 on error
-        }
-      }
-      setErrorDays(days);
-    };
 
-    if (users.length > 0) {
-      loadErrorDays();
-    }
-  }, [users, errorDaysRefresh]);
+  // Memoize users to prevent infinite re-renders
+  const memoizedUsers = useMemo(() => users, [users]);
 
-  // Refresh error days when window gains focus or weekly report is saved
-  useEffect(() => {
-    const handleFocus = () => {
-      setErrorDaysRefresh(prev => prev + 1);
-    };
 
-    const handleWeeklyReportSaved = () => {
-      setErrorDaysRefresh(prev => prev + 1);
-    };
 
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('weeklyReportSaved', handleWeeklyReportSaved);
 
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('weeklyReportSaved', handleWeeklyReportSaved);
-    };
-  }, []);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === "all" || user.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
+  const filteredUsers = useMemo(() => {
+    return memoizedUsers.filter((user) => {
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === "all" || user.role === filterRole;
+      return matchesSearch && matchesRole;
+    });
+  }, [memoizedUsers, searchTerm, filterRole]);
 
   // ✅ Move current user to top
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    if (a.id === currentUserId) return -1;
-    if (b.id === currentUserId) return 1;
-    return 0;
-  });
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      if (a.id === currentUserId) return -1;
+      if (b.id === currentUserId) return 1;
+      return 0;
+    });
+  }, [filteredUsers, currentUserId]);
 
   async function handleDeleteUser(userId: string) {
     try {
@@ -140,10 +108,8 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     try {
       setIsUpdating(true);
       await updateUserJoinedAt(editUser.user.id, editUser.joinedAt);
-      toast.success("User joined date updated successfully");
-      setEditUser(null);
-      // Refresh unfilled days in case joined date changed
-      setErrorDaysRefresh(prev => prev + 1);
+       toast.success("User joined date updated successfully");
+       setEditUser(null);
     } catch {
       toast.error("Failed to update user joined date");
     } finally {
@@ -332,12 +298,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                      </div>
                    )}
 
-                   <div className="flex items-center gap-2 text-xs text-orange-600">
-                     <Clock className="h-3 w-3 flex-shrink-0" />
-                      <span>
-                        {errorDays[user.id] ?? "..."} error days
-                      </span>
-                   </div>
+
                  </div>
                </CardContent>
              </Card>
@@ -411,10 +372,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                              {new Date(user.createdAt).toLocaleDateString()}
                            </span>
                          )}
-                         <span className="text-xs text-orange-600 flex items-center gap-1 whitespace-nowrap">
-                           <Clock className="h-3 w-3 flex-shrink-0" />
-                            {errorDays[user.id] ?? "..."} errors
-                         </span>
+
                        </div>
                      </div>
                    </div>

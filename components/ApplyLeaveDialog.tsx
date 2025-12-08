@@ -37,11 +37,14 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 import { applyLeave } from "@/actions/leave";
+import { getAllUsersForLeave } from "@/actions/users";
 import { toast } from "sonner";
+import { useSession } from "@/lib/auth-client";
 
 // Validation schema
 const applyLeaveSchema = z
   .object({
+    userId: z.string().optional(),
     leaveType: z.enum(["CL", "ML"]),
     fromDate: z.date({
       message: "Please select a from date",
@@ -69,10 +72,14 @@ interface ApplyLeaveDialogProps {
 export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
   const [open, setOpen] = React.useState<boolean>(false);
   const [isPending, setIsPending] = React.useState<boolean>(false);
+  const [users, setUsers] = React.useState<Array<{ id: string; name: string; email: string; role: string | null }>>([]);
+  
+  const { data: session } = useSession();
 
   const form = useForm<ApplyLeave>({
     resolver: zodResolver(applyLeaveSchema),
     defaultValues: {
+      userId: session?.user.id || "",
       leaveType: "CL",
       fromDate: undefined,
       toDate: undefined,
@@ -80,17 +87,40 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
     },
   });
 
+  // Load users for admin dropdown
+  React.useEffect(() => {
+    const loadUsers = async () => {
+      if (session?.user.role === "admin") {
+        try {
+          const userList = await getAllUsersForLeave();
+          setUsers(userList);
+        } catch (error) {
+          console.error("Error loading users:", error);
+          toast.error("Failed to load users");
+        }
+      }
+    };
+
+    loadUsers();
+  }, [session]);
+
   async function onSubmit(values: ApplyLeave) {
     try {
       setIsPending(true);
       await applyLeave({
+        userId: values.userId !== session?.user.id ? values.userId : undefined, // Only send userId if it's different from current user
         leaveType: values.leaveType,
         fromDate: new Date(values.fromDate),
         toDate: new Date(values.toDate),
         reason: values.reason,
       });
 
-      toast.success("Leave application submitted successfully");
+      const isForOtherUser = values.userId && values.userId !== session?.user.id;
+      toast.success(
+        isForOtherUser 
+          ? "Leave application submitted successfully for " + users.find(u => u.id === values.userId)?.name
+          : "Leave application submitted successfully"
+      );
       form.reset();
       setOpen(false);
       onSuccess?.();
@@ -120,7 +150,10 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:w-full">
         <DialogTitle>Apply for Leave</DialogTitle>
         <DialogDescription>
-          Submit your leave request for review by your manager.
+          {session?.user.role === "admin" 
+            ? "Apply leave for yourself or on behalf of other users."
+            : "Submit your leave request for review by your manager."
+          }
         </DialogDescription>
 
         <Form {...form}>
@@ -128,6 +161,33 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 pt-4"
           >
+            {/* User Selection - Only for Admins */}
+            {session?.user.role === "admin" && (
+              <FormField
+                control={form.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Apply Leave For</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={session?.user.id || ""}>Yourself</SelectItem>
+                        {users.filter(user => user.id !== session?.user.id).map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.email}) {user.role === "admin" && "(Admin)"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             {/* Leave Type */}
             <FormField
               control={form.control}
