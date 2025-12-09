@@ -187,6 +187,7 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string, curr
     return {
       id: report.id,
       weekStartDate: report.weekStartDate,
+      targetHours: parseFloat(report.targetHours),
       hours,
       projects,
       descriptions,
@@ -385,6 +386,199 @@ export async function getUnfilledDaysCount(userId: string, createdAt: Date) {
     }
     throw new Error("Failed to calculate unfilled days");
   }
+}
+
+export async function setTargetHours(data: {
+  userId: string;
+  weekStartDate: Date;
+  targetHours: number;
+}) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can set target hours
+    if (session.user.role !== "admin") {
+      throw new Error("Access denied - only admins can set target hours");
+    }
+
+    // Check if weekly report exists
+    const existingReport = await db
+      .select()
+      .from(weeklyReports)
+      .where(
+        and(
+          eq(weeklyReports.userId, data.userId),
+          eq(
+            weeklyReports.weekStartDate,
+            data.weekStartDate.toISOString().split("T")[0]
+          )
+        )
+      )
+      .limit(1);
+
+    if (existingReport.length > 0) {
+      // Update existing report
+      await db
+        .update(weeklyReports)
+        .set({
+          targetHours: data.targetHours.toFixed(2),
+          updatedAt: new Date()
+        })
+        .where(eq(weeklyReports.id, existingReport[0].id));
+    } else {
+      // Create new report with target hours
+      await db.insert(weeklyReports).values({
+        userId: data.userId,
+        weekStartDate: data.weekStartDate.toISOString().split("T")[0],
+        targetHours: data.targetHours.toFixed(2),
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/users");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error setting target hours:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to set target hours");
+  }
+}
+
+export async function getUserTargetHours(userId: string, weekStartDate?: Date) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can view target hours
+    if (session.user.role !== "admin") {
+      throw new Error("Access denied - only admins can view target hours");
+    }
+
+    const whereConditions = [eq(weeklyReports.userId, userId)];
+
+    if (weekStartDate) {
+      whereConditions.push(
+        eq(
+          weeklyReports.weekStartDate,
+          weekStartDate.toISOString().split("T")[0]
+        )
+      );
+    }
+
+    const results = await db
+      .select({
+        weekStartDate: weeklyReports.weekStartDate,
+        targetHours: weeklyReports.targetHours,
+        createdAt: weeklyReports.createdAt,
+        updatedAt: weeklyReports.updatedAt,
+      })
+      .from(weeklyReports)
+      .where(and(...whereConditions))
+      .orderBy(desc(weeklyReports.weekStartDate))
+      .limit(10);
+
+    return results.map(result => ({
+      ...result,
+      targetHours: parseFloat(result.targetHours),
+    }));
+  } catch (error) {
+    console.error("Error fetching user target hours:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to fetch target hours");
+  }
+}
+
+export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can view other users' progress
+    if (session.user.role !== "admin") {
+      throw new Error("Access denied - only admins can view user progress");
+    }
+
+    const targetDate = weekStartDate || getWeekStart(new Date());
+    const weekStartStr = targetDate.toISOString().split("T")[0];
+
+    // Get target hours for the week
+    const targetReport = await db
+      .select({
+        targetHours: weeklyReports.targetHours,
+      })
+      .from(weeklyReports)
+      .where(
+        and(
+          eq(weeklyReports.userId, userId),
+          eq(weeklyReports.weekStartDate, weekStartStr)
+        )
+      )
+      .limit(1);
+
+    const targetHours = targetReport.length > 0 ? parseFloat(targetReport[0].targetHours) : 40;
+
+    // Get actual hours worked for the week
+    const actualHoursResult = await db
+      .select({
+        totalHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
+      })
+      .from(weeklyReports)
+      .leftJoin(
+        dailyTimeEntries,
+        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+      )
+      .where(
+        and(
+          eq(weeklyReports.userId, userId),
+          eq(weeklyReports.weekStartDate, weekStartStr)
+        )
+      )
+      .limit(1);
+
+    const actualHours = Number(actualHoursResult[0]?.totalHours || 0);
+
+    return {
+      targetHours,
+      actualHours,
+      progressPercentage: targetHours > 0 ? Math.min((actualHours / targetHours) * 100, 100) : 0,
+      weekStartDate: weekStartStr,
+    };
+  } catch (error) {
+    console.error("Error fetching user weekly progress:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to fetch user weekly progress");
+  }
+}
+
+// Helper function to get week start date (Monday)
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  return new Date(d.setDate(diff));
 }
 
 

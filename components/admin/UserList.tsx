@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,9 +38,64 @@ import {
   Calendar,
   Grid,
   List,
+  Clock,
 } from "lucide-react";
 import { SelectUser } from "@/db/schema/auth-schema";
 import { deleteUser, updateUserJoinedAt } from "@/actions/users";
+import { setTargetHours, getUserTargetHours } from "@/actions/weekly-reports";
+
+// Component to display target hours badge
+function TargetHoursBadge({
+  userId,
+  targetHours,
+  onLoad
+}: {
+  userId: string;
+  targetHours?: Array<{ weekStartDate: string; targetHours: number; createdAt: Date; updatedAt: Date; }>;
+  onLoad: (userId: string) => Promise<Array<{ weekStartDate: string; targetHours: number; createdAt: Date; updatedAt: Date; }>>;
+}) {
+  const [currentTarget, setCurrentTarget] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (targetHours && targetHours.length > 0) {
+      setCurrentTarget(targetHours[0].targetHours);
+    } else {
+      // Load target hours if not already loaded
+      setLoading(true);
+      onLoad(userId).then((data) => {
+        if (data.length > 0) {
+          setCurrentTarget(data[0].targetHours);
+        }
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
+    }
+  }, [userId, targetHours, onLoad]);
+
+  if (loading) {
+    return (
+      <Badge variant="outline" className="text-xs">
+        <Clock className="h-3 w-3 mr-1" />
+        Loading...
+      </Badge>
+    );
+  }
+
+  if (currentTarget) {
+    return (
+      <Badge variant="outline" className="text-xs">
+        <Clock className="h-3 w-3 mr-1" />
+        Target: {currentTarget}h
+      </Badge>
+    );
+  }
+
+  return null;
+}
+
+
 import { toast } from "sonner";
 
 interface UserListProps {
@@ -62,10 +117,38 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     joinedAt: Date;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-
+  const [setTargetUser, setSetTargetUser] = useState<{
+    user: SelectUser;
+    targetHours: number;
+    weekStartDate: Date;
+  } | null>(null);
+  const [isSettingTarget, setIsSettingTarget] = useState(false);
+  const [userTargetHours, setUserTargetHours] = useState<Record<string, Array<{
+    weekStartDate: string;
+    targetHours: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }>>>({});
 
   // Memoize users to prevent infinite re-renders
   const memoizedUsers = useMemo(() => users, [users]);
+
+  // Load target hours for a specific user
+  const loadUserTargetHours = async (userId: string) => {
+    if (userTargetHours[userId]) return userTargetHours[userId]; // Already loaded
+
+    try {
+      const targetHours = await getUserTargetHours(userId);
+      setUserTargetHours(prev => ({
+        ...prev,
+        [userId]: targetHours,
+      }));
+      return targetHours;
+    } catch (error) {
+      console.error(`Failed to load target hours for user ${userId}:`, error);
+      return [];
+    }
+  };
 
 
 
@@ -114,6 +197,32 @@ export default function UserList({ users, currentUserId }: UserListProps) {
       toast.error("Failed to update user joined date");
     } finally {
       setIsUpdating(false);
+    }
+  }
+
+  async function handleSetTargetHours() {
+    if (!setTargetUser) return;
+    try {
+      setIsSettingTarget(true);
+      await setTargetHours({
+        userId: setTargetUser.user.id,
+        weekStartDate: setTargetUser.weekStartDate,
+        targetHours: setTargetUser.targetHours,
+      });
+
+      // Refresh target hours data
+      const updatedTargetHours = await getUserTargetHours(setTargetUser.user.id);
+      setUserTargetHours(prev => ({
+        ...prev,
+        [setTargetUser.user.id]: updatedTargetHours,
+      }));
+
+      toast.success("Target hours set successfully");
+      setSetTargetUser(null);
+    } catch {
+      toast.error("Failed to set target hours");
+    } finally {
+      setIsSettingTarget(false);
     }
   }
 
@@ -264,39 +373,42 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                    </DropdownMenu>
                  </div>
 
-                 <div className="space-y-2 sm:space-y-3">
-                   <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                     <Badge
-                       variant={user.role === "admin" ? "default" : "secondary"}
-                       className="text-xs"
-                     >
-                       <Shield className="h-3 w-3 mr-1" />
-                       {user.role}
-                     </Badge>
-                     {user.emailVerified ? (
-                       <Badge
-                         variant="outline"
-                         className="text-xs border-green-200 text-green-700"
-                       >
-                         <Mail className="h-3 w-3 mr-1" />
-                         Verified
-                       </Badge>
-                     ) : (
-                       <Badge variant="outline" className="text-xs">
-                         <Mail className="h-3 w-3 mr-1" />
-                         Unverified
-                       </Badge>
-                     )}
-                   </div>
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <Badge
+                          variant={user.role === "admin" ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          <Shield className="h-3 w-3 mr-1" />
+                          {user.role}
+                        </Badge>
+                        {user.emailVerified ? (
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-green-200 text-green-700"
+                          >
+                            <Mail className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            <Mail className="h-3 w-3 mr-1" />
+                            Unverified
+                          </Badge>
+                        )}
+                         <TargetHoursBadge userId={user.id} targetHours={userTargetHours[user.id]} onLoad={loadUserTargetHours} />
+                       </div>
 
                    {user.createdAt && (
-                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                       <Calendar className="h-3 w-3 flex-shrink-0" />
-                       <span className="truncate">
-                         Joined {new Date(user.createdAt).toLocaleDateString()}
-                       </span>
-                     </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">
+                          Joined {new Date(user.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                    )}
+
+
 
 
                  </div>
@@ -371,28 +483,27 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                              <Calendar className="h-3 w-3 flex-shrink-0" />
                              {new Date(user.createdAt).toLocaleDateString()}
                            </span>
-                         )}
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-                       </div>
-                     </div>
-                   </div>
-
-                   <div className="flex items-center justify-end gap-2 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="hidden sm:flex text-xs px-2 py-1 h-8"
-                        onClick={() =>
-                          setEditUser({
-                            user,
-                            joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
-                          })
-                        }
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                     <DropdownMenu>
+                    <div className="flex items-center justify-end gap-2 flex-shrink-0">
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         className="hidden sm:flex text-xs px-2 py-1 h-8"
+                         onClick={() =>
+                           setEditUser({
+                             user,
+                             joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+                           })
+                         }
+                       >
+                         <Edit className="h-3 w-3 mr-1" />
+                         Edit
+                       </Button>
+                      <DropdownMenu>
                        <DropdownMenuTrigger asChild>
                          <Button
                            variant="ghost"
@@ -415,6 +526,39 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                            Edit Joined Date
                          </DropdownMenuItem>
                          <DropdownMenuItem
+                           onClick={async () => {
+                             const currentWeek = new Date();
+                             let targetHours = 40;
+
+                             // Load target hours for this user on demand
+                             try {
+                               const userTargets = await getUserTargetHours(user.id);
+                               const currentTarget = userTargets.find(target =>
+                                 target.weekStartDate === currentWeek.toISOString().split('T')[0]
+                               );
+                               if (currentTarget) {
+                                 targetHours = currentTarget.targetHours;
+                               }
+                               // Cache the data for display
+                               setUserTargetHours(prev => ({
+                                 ...prev,
+                                 [user.id]: userTargets,
+                               }));
+                             } catch (error) {
+                               console.error(`Failed to load target hours for user ${user.id}:`, error);
+                             }
+
+                             setSetTargetUser({
+                               user,
+                               targetHours,
+                               weekStartDate: currentWeek,
+                             });
+                           }}
+                         >
+                           <Clock className="h-4 w-4 mr-2" />
+                           Set Target Hours
+                         </DropdownMenuItem>
+                         <DropdownMenuItem
                            onClick={() =>
                              setDeleteConfirm({
                                userId: user.id,
@@ -426,15 +570,15 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                            <Trash2 className="h-4 w-4 mr-2" />
                            Delete User
                          </DropdownMenuItem>
-                       </DropdownMenuContent>
-                     </DropdownMenu>
-                   </div>
-                 </div>
-               </CardContent>
-             </Card>
-           ))}
-         </div>
-      )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+       )}
 
       {/* Empty State */}
       {sortedUsers.length === 0 && (
@@ -553,6 +697,107 @@ export default function UserList({ users, currentUserId }: UserListProps) {
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Set Target Hours Dialog */}
+      <Dialog
+        open={!!setTargetUser}
+        onOpenChange={() => setSetTargetUser(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {setTargetUser && userTargetHours[setTargetUser.user.id]?.some(target =>
+                target.weekStartDate === setTargetUser.weekStartDate.toISOString().split('T')[0]
+              ) ? 'Edit Target Hours' : 'Set Target Hours'}
+            </DialogTitle>
+            <DialogDescription>
+              Set the target number of hours for <strong>{setTargetUser?.user.name}</strong> for the selected week.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Week Start Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !setTargetUser?.weekStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {setTargetUser?.weekStartDate ? (
+                      setTargetUser.weekStartDate.toLocaleDateString()
+                    ) : (
+                      "Pick a week start date"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={setTargetUser?.weekStartDate}
+                    onSelect={(date) => {
+                      if (date && setTargetUser) {
+                        setSetTargetUser({ ...setTargetUser, weekStartDate: date });
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target Hours</label>
+              <Input
+                type="number"
+                min="0"
+                max="168"
+                step="0.5"
+                value={setTargetUser?.targetHours || 40}
+                onChange={(e) => {
+                  if (setTargetUser) {
+                    setSetTargetUser({
+                      ...setTargetUser,
+                      targetHours: parseFloat(e.target.value) || 0,
+                    });
+                  }
+                }}
+                placeholder="40"
+              />
+            </div>
+
+            {setTargetUser && userTargetHours[setTargetUser.user.id]?.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Existing Target Hours</label>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {userTargetHours[setTargetUser.user.id].map((target, index) => (
+                    <div key={index} className="flex justify-between items-center text-xs p-2 bg-muted rounded">
+                      <span>{new Date(target.weekStartDate).toLocaleDateString()}</span>
+                      <span className="font-medium">{target.targetHours}h</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSetTargetUser(null)}
+              disabled={isSettingTarget}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSetTargetHours}
+              disabled={isSettingTarget}
+            >
+              {isSettingTarget ? "Setting..." : "Set Target Hours"}
             </Button>
           </DialogFooter>
         </DialogContent>

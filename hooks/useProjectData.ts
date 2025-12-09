@@ -29,7 +29,19 @@ export function useProjectData({
   >([]);
   const [projectDateRanges, setProjectDateRanges] = useState<DateRange[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentProject, setCurrentProject] = useState<any>(null);
+  const [currentProject, setCurrentProject] = useState<{
+    id: string;
+    projectName: string;
+    status: "not_started" | "in_progress" | "on_hold" | "completed" | "cancelled" | null;
+    summary: string | null;
+    plannedStart: Date | null;
+    plannedEnd: Date | null;
+    actualStart: Date | null;
+    actualEnd: Date | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+    assignees: Member[];
+  } | null>(null);
 
   // Load current project and user projects when member changes
   useEffect(() => {

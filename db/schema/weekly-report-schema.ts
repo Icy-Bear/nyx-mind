@@ -16,6 +16,9 @@ export const weeklyReports = pgTable("weekly_reports", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   weekStartDate: date("week_start_date").notNull(),
+  targetHours: decimal("target_hours", { precision: 4, scale: 2 })
+    .default("40.00")
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

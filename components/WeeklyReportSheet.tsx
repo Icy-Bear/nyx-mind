@@ -17,11 +17,13 @@ import {
   WeekNavigation,
   DailyLogsGrid,
   DayEditDialog,
+  TargetHoursProgress,
 } from "./weekly-report";
 
 // Import custom hooks
 import { useWeeklyReportData } from "@/hooks/useWeeklyReportData";
 import { useProjectData } from "@/hooks/useProjectData";
+import { useAuth } from "@/hooks/useAuth";
 
 // Day mapping constant (matches database values)
 const DAY_MAPPING = {
@@ -69,6 +71,8 @@ export function WeeklyReportSheet({
     hours,
     projects,
     descriptions,
+    targetHours,
+    totalActualHours,
     isLoading,
     updateHours,
     updateProject,
@@ -86,6 +90,8 @@ export function WeeklyReportSheet({
     currentProjectId,
     currentProjectName,
   });
+
+  const { isAdmin } = useAuth();
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -147,11 +153,22 @@ export function WeeklyReportSheet({
           member={member}
           selectedDate={selectedDate}
           currentProjectName={currentProjectName}
+          targetHours={targetHours}
           project={currentProject}
         />
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            {/* TARGET HOURS AND PROGRESS */}
+            <TargetHoursProgress
+              member={member}
+              targetHours={targetHours}
+              actualHours={totalActualHours}
+              selectedDate={selectedDate}
+              isCurrentUserAdmin={isAdmin}
+              onTargetHoursUpdated={refreshData}
+            />
+
             {/* WEEK NAVIGATION */}
             <WeekNavigation
               selectedDate={selectedDate}

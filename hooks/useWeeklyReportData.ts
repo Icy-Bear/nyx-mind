@@ -58,6 +58,7 @@ export function useWeeklyReportData({
 
   const [isLoading, setIsLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [targetHours, setTargetHours] = useState<number>(40);
 
   // Load weekly report data when week changes or data is saved
   useEffect(() => {
@@ -73,6 +74,7 @@ export function useWeeklyReportData({
           setHours(report.hours);
           setProjects(report.projects);
           setDescriptions(report.descriptions);
+          setTargetHours(report.targetHours || 40);
         } else {
           // Reset to defaults for new week
           setHours({
@@ -137,10 +139,15 @@ export function useWeeklyReportData({
     onDataSaved?.();
   };
 
+  // Calculate total actual hours worked
+  const totalActualHours = Object.values(hours).reduce((sum, dayHours) => sum + dayHours, 0);
+
   return {
     hours,
     projects,
     descriptions,
+    targetHours,
+    totalActualHours,
     isLoading,
     updateHours,
     updateProject,

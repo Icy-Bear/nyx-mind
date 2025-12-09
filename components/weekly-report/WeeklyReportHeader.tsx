@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+
 import { getProjectWeekInfo } from "@/lib/project-date-utils";
 
 interface Member {
@@ -17,26 +17,38 @@ interface WeeklyReportHeaderProps {
   member: Member | null;
   selectedDate: Date;
   currentProjectName?: string;
+  targetHours?: number;
   project?: {
     id: string;
     projectName: string;
+    status: "not_started" | "in_progress" | "on_hold" | "completed" | "cancelled" | null;
+    summary: string | null;
     plannedStart?: Date | null;
     plannedEnd?: Date | null;
     actualStart?: Date | null;
     actualEnd?: Date | null;
-  };
+    createdAt?: Date | null;
+    updatedAt?: Date | null;
+    assignees: Array<{
+      id: string;
+      name: string;
+      email: string;
+      role: string | null;
+      createdAt: Date;
+    }>;
+  } | null;
 }
 
 export function WeeklyReportHeader({
   member,
   selectedDate,
   currentProjectName,
+  targetHours,
   project,
 }: WeeklyReportHeaderProps) {
   if (!member) return null;
 
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
+
   
   // Get project week info for accurate week calculation
   const projectWeekInfo = project ? getProjectWeekInfo(project, selectedDate) : null;
@@ -62,21 +74,28 @@ export function WeeklyReportHeader({
             )}
           </div>
         </div>
-        <Badge
-          variant="secondary"
-          className="text-sm self-start sm:self-center shrink-0"
-        >
-          {projectWeekInfo ? (
-            <>
-              Week {projectWeekInfo.currentWeek} of {projectWeekInfo.totalWeeks}
-              <div className="text-xs text-muted-foreground mt-1">
-                ({projectWeekInfo.dateRangeType === 'actual' ? 'Actual' : 'Planned'} Dates)
-              </div>
-            </>
-          ) : (
-            <>Week {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}</>
+        <div className="flex flex-col gap-2">
+          <Badge
+            variant="secondary"
+            className="text-sm self-start sm:self-center shrink-0"
+          >
+            {projectWeekInfo ? (
+              <>
+                Week {projectWeekInfo.currentWeek} of {projectWeekInfo.totalWeeks}
+                <div className="text-xs text-muted-foreground mt-1">
+                  ({projectWeekInfo.dateRangeType === 'actual' ? 'Actual' : 'Planned'} Dates)
+                </div>
+              </>
+            ) : (
+              <>Week {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}</>
+            )}
+          </Badge>
+          {targetHours && (
+            <Badge variant="outline" className="text-sm self-start sm:self-center shrink-0">
+              Target: {targetHours}h
+            </Badge>
           )}
-        </Badge>
+        </div>
       </div>
     </div>
   );
