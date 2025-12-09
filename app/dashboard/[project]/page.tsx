@@ -9,7 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
@@ -37,10 +37,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams, useRouter } from "next/navigation";
 import { ProjectWithAssignees, User } from "@/lib/types";
-import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
+
 import { StatusEdit } from "@/components/admin/StatusEdit";
 import { EditProjectForm } from "@/components/edit-project-form";
 import { usePageTitle } from "@/contexts/page-title-context";
+
+import { EnhancedUserCard } from "@/components/admin/EnhancedUserCard";
+import { WeeklyReportSheet } from "@/components/WeeklyReportSheet";
 import {
   getStatusColor,
   getStatusLabel,
@@ -59,7 +62,6 @@ export default function ProjectPage() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
   const [selectedMember, setSelectedMember] = useState<{
     id: string;
     name: string;
@@ -76,6 +78,8 @@ export default function ProjectPage() {
   const handleDataSaved = () => {
     // Data saved callback - can be used for other refresh logic if needed
   };
+
+
 
   const handleStatusUpdated = () => {
     // Refresh project data when status is updated
@@ -461,9 +465,9 @@ export default function ProjectPage() {
             </Card>
           </div>
 
-          {/* TEAM MEMBERS TABLE */}
+          {/* TEAM MEMBERS CARDS */}
           <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold tracking-tight">
                 Team Members
               </h2>
@@ -472,120 +476,43 @@ export default function ProjectPage() {
               </span>
             </div>
             {project.assignees.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border bg-card">
-                {/* Desktop Table */}
-                <table className="w-full text-sm hidden md:table">
-                  <thead className="bg-muted/40">
-                    <tr className="border-b">
-                      <th className="p-3 text-left font-medium">Member</th>
-                      <th className="p-3 text-left font-medium">Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedAssignees.map((assignee) => {
-                      const canOpen = isAdmin || assignee.id === loggedInUserId;
-
-                      return (
-                        <tr
-                          key={assignee.id}
-                          className={`
-                border-b transition 
-                ${canOpen ? "cursor-pointer" : "opacity-70 cursor-not-allowed"}
-                ${assignee.id === loggedInUserId ? "bg-gray-200" : ""}
-              `}
-                          onClick={() => {
-                            if (!canOpen) {
-                              toast.error("You can only view your own details");
-                              return;
-                            }
-                            setSelectedMember(assignee);
-                            setPanelOpen(true);
-                          }}
-                        >
-                          <td className="p-3 flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback>
-                                {assignee.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-
-                            <span className="font-medium flex items-center gap-2">
-                              {assignee.name}
-                              {assignee.id === loggedInUserId && (
-                                <Badge variant="secondary">You</Badge>
-                              )}
-                            </span>
-                          </td>
-
-                          <td className="p-3">
-                            <Badge variant="outline">{assignee.role}</Badge>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-
-                {/* Mobile Grid View */}
-                <div className="md:hidden grid grid-cols-1 gap-3 p-3">
-                  {sortedAssignees.map((assignee) => {
-                    const canOpen = isAdmin || assignee.id === loggedInUserId;
-
-                    return (
-                      <div
-                        key={assignee.id}
-                        className={`p-4 border rounded-lg bg-card shadow-sm transition 
-          ${canOpen ? "cursor-pointer" : "opacity-70 cursor-not-allowed"}
-          ${assignee.id === loggedInUserId ? "bg-gray-200" : ""}
-        `}
-                        onClick={() => {
-                          if (!canOpen) {
-                            toast.error("You can only view your own details");
-                            return;
-                          }
-                          setSelectedMember(assignee);
-                          setPanelOpen(true);
-                        }}
-                      >
-                        {/* Header */}
-                        <div className="flex items-center gap-3 mb-2">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {assignee.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-
-                          <div className="flex flex-col">
-                            <span className="font-medium flex items-center gap-2">
-                              {assignee.name}
-                              {assignee.id === loggedInUserId && (
-                                <Badge variant="secondary">You</Badge>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Role */}
-                        <div className="flex justify-start text-sm mt-3">
-                          <Badge variant="outline">{assignee.role}</Badge>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedAssignees.map((assignee) => {
+                  const canOpen = isAdmin || assignee.id === loggedInUserId;
+                  
+                  return (
+                    <EnhancedUserCard
+                      key={assignee.id}
+                      user={{
+                        id: assignee.id,
+                        name: assignee.name,
+                        email: assignee.email,
+                        role: assignee.role || "user",
+                        createdAt: assignee.createdAt
+                      }}
+                      isCurrentUser={assignee.id === loggedInUserId}
+                      onOpenWeeklyReport={() => {
+                        if (!canOpen) {
+                          toast.error("You can only view your own details");
+                          return;
+                        }
+                        setSelectedMember(assignee);
+                        setPanelOpen(true);
+                      }}
+                    />
+                  );
+                })}
               </div>
             ) : (
-              <p className="text-muted-foreground">
-                No team members assigned yet.
-              </p>
+              <div className="text-center py-12">
+                <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                  <Users className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No team members</h3>
+                <p className="text-muted-foreground">
+                  No team members assigned to this project yet.
+                </p>
+              </div>
             )}
           </div>
         </div>

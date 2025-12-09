@@ -174,7 +174,14 @@ export function WeeklyReportSheet({
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
               projectDateRanges={projectDateRanges}
-              project={currentProject}
+              project={currentProject ? {
+                id: currentProject.id,
+                projectName: currentProject.projectName,
+                plannedStart: currentProject.plannedStart,
+                plannedEnd: currentProject.plannedEnd,
+                actualStart: currentProject.actualStart,
+                actualEnd: currentProject.actualEnd,
+              } : undefined}
             />
 
             {/* DAILY LOGS GRID */}

@@ -39,7 +39,6 @@ export function useProjectData({
     actualStart: Date | null;
     actualEnd: Date | null;
     createdAt: Date | null;
-    updatedAt: Date | null;
     assignees: Member[];
   } | null>(null);
 

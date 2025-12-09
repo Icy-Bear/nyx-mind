@@ -573,6 +573,95 @@ export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date
   }
 }
 
+export async function getUserTotalHours(userId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can view other users' total hours
+    if (session.user.role !== "admin") {
+      throw new Error("Access denied - only admins can view user total hours");
+    }
+
+    // Get total hours worked across all time
+    const totalHoursResult = await db
+      .select({
+        totalHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
+      })
+      .from(weeklyReports)
+      .leftJoin(
+        dailyTimeEntries,
+        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+      )
+      .where(eq(weeklyReports.userId, userId))
+      .limit(1);
+
+    return Number(totalHoursResult[0]?.totalHours || 0);
+  } catch (error) {
+    console.error("Error fetching user total hours:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to fetch user total hours");
+  }
+}
+
+export async function getUserWeeklyBreakdown(userId: string, weeksCount: number = 12) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      throw new Error("Unauthorized");
+    }
+
+    // Only admins can view other users' weekly breakdown
+    if (session.user.role !== "admin") {
+      throw new Error("Access denied - only admins can view user weekly breakdown");
+    }
+
+    // Get weekly reports for the last N weeks
+    const weeklyData = await db
+      .select({
+        weekStartDate: weeklyReports.weekStartDate,
+        targetHours: weeklyReports.targetHours,
+        actualHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
+      })
+      .from(weeklyReports)
+      .leftJoin(
+        dailyTimeEntries,
+        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+      )
+      .where(eq(weeklyReports.userId, userId))
+      .groupBy(weeklyReports.weekStartDate, weeklyReports.targetHours)
+      .orderBy(desc(weeklyReports.weekStartDate))
+      .limit(weeksCount);
+
+    return weeklyData.map(week => {
+      const targetHours = parseFloat(week.targetHours);
+      const actualHours = Number(week.actualHours);
+      return {
+        weekStartDate: week.weekStartDate,
+        targetHours,
+        actualHours,
+        progressPercentage: targetHours > 0 ? Math.min((actualHours / targetHours) * 100, 100) : 0,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching user weekly breakdown:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to fetch user weekly breakdown");
+  }
+}
+
 // Helper function to get week start date (Monday)
 function getWeekStart(date: Date): Date {
   const d = new Date(date);
