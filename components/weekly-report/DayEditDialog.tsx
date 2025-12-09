@@ -39,16 +39,11 @@ export function DayEditDialog({
   onOpenChange,
   day,
   hours,
-  project,
   description,
   onHoursChange,
-  onProjectChange,
   onDescriptionChange,
   onSave,
   isSaving,
-  userProjects,
-  currentProjectId,
-  currentProjectName,
 }: DayEditDialogProps) {
   return (
     <Dialog
