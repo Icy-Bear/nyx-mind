@@ -29,6 +29,7 @@ export function useProjectData({
   >([]);
   const [projectDateRanges, setProjectDateRanges] = useState<DateRange[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentProject, setCurrentProject] = useState<any>(null);
 
   // Load current project and user projects when member changes
   useEffect(() => {
@@ -41,6 +42,7 @@ export function useProjectData({
           // In project context - only load current project
           const projectDetails = await getProjectDetails(currentProjectId);
           setUserProjects([{ id: currentProjectId, projectName: currentProjectName }]);
+          setCurrentProject(projectDetails);
           
           // Get date range for current project only
           const ranges = getProjectDateRanges([projectDetails]);
@@ -73,5 +75,6 @@ export function useProjectData({
     userProjects,
     projectDateRanges,
     isLoading,
+    currentProject,
   };
 }

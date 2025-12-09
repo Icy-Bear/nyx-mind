@@ -81,7 +81,7 @@ export function WeeklyReportSheet({
     onDataSaved,
   });
 
-  const { userProjects, projectDateRanges } = useProjectData({
+  const { userProjects, projectDateRanges, currentProject } = useProjectData({
     member,
     currentProjectId,
     currentProjectName,
@@ -147,6 +147,7 @@ export function WeeklyReportSheet({
           member={member}
           selectedDate={selectedDate}
           currentProjectName={currentProjectName}
+          project={currentProject}
         />
 
         <div className="flex-1 overflow-y-auto">
@@ -156,6 +157,7 @@ export function WeeklyReportSheet({
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
               projectDateRanges={projectDateRanges}
+              project={currentProject}
             />
 
             {/* DAILY LOGS GRID */}

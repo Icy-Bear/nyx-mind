@@ -15,18 +15,33 @@ import {
   ChevronDownIcon,
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
-import { isDateInAnyRange, DateRange } from "@/lib/project-date-utils";
+import { 
+  isDateInAnyRange, 
+  DateRange, 
+  getProjectWeekInfo,
+  getProjectWeekModifier,
+  getProjectWeekClassName
+} from "@/lib/project-date-utils";
 
 interface WeekNavigationProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   projectDateRanges: DateRange[];
+  project?: {
+    id: string;
+    projectName: string;
+    plannedStart?: Date | null;
+    plannedEnd?: Date | null;
+    actualStart?: Date | null;
+    actualEnd?: Date | null;
+  };
 }
 
 export function WeekNavigation({
   selectedDate,
   onDateChange,
   projectDateRanges,
+  project,
 }: WeekNavigationProps) {
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -38,11 +53,8 @@ export function WeekNavigation({
     }
   };
 
-  const getWeekOfMonth = (date: Date) => {
-    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const dayOfMonth = date.getDate();
-    return Math.ceil((dayOfMonth + startOfMonth.getDay() - 1) / 7);
-  };
+  // Get project week info for week calculation
+  const projectWeekInfo = project ? getProjectWeekInfo(project, selectedDate) : null;
 
   const goToPreviousWeek = () => {
     onDateChange(new Date(selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000));
@@ -110,45 +122,53 @@ export function WeekNavigation({
                     (range) => date >= range.start && date <= range.end
                   );
                 }}
-                modifiers={{
-                  week1: (date) => getWeekOfMonth(date) === 1,
-                  week2: (date) => getWeekOfMonth(date) === 2,
-                  week3: (date) => getWeekOfMonth(date) === 3,
-                  week4: (date) => getWeekOfMonth(date) === 4,
-                }}
-                modifiersClassNames={{
-                  week1: "bg-blue-50 hover:bg-blue-100 text-blue-700",
-                  week2:
-                    "bg-green-50 hover:bg-green-100 text-green-700",
-                  week3:
-                    "bg-yellow-50 hover:bg-yellow-100 text-yellow-700",
-                  week4:
-                    "bg-purple-50 hover:bg-purple-100 text-purple-700",
-                }}
+                modifiers={
+                  projectWeekInfo ? {
+                    [getProjectWeekModifier(projectWeekInfo.currentWeek)]: (date) => {
+                      const dateWeekInfo = project ? getProjectWeekInfo(project, date) : null;
+                      return dateWeekInfo?.weekNumber === projectWeekInfo.currentWeek;
+                    }
+                  } : {}
+                }
+                modifiersClassNames={
+                  projectWeekInfo ? {
+                    [getProjectWeekModifier(projectWeekInfo.currentWeek)]: getProjectWeekClassName(projectWeekInfo.currentWeek)
+                  } : {}
+                }
               />
-              <div className="p-3 border-t bg-muted/30">
-                <div className="text-xs font-medium text-muted-foreground mb-2 text-center">
-                  Week Colors
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></div>
-                    <span>Week 1</span>
+                {projectWeekInfo && (
+                  <div className="p-3 border-t bg-muted/30">
+                    <div className="text-xs font-medium text-muted-foreground mb-2 text-center">
+                      Project Week Colors
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></div>
+                        <span>Week 1</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-green-100 border border-green-200"></div>
+                        <span>Week 2</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></div>
+                        <span>Week 3</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-purple-100 border border-purple-200"></div>
+                        <span>Week 4</span>
+                      </div>
+                      {projectWeekInfo.totalWeeks > 4 && (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded bg-orange-100 border border-orange-200"></div>
+                            <span>Week 5+</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-green-100 border border-green-200"></div>
-                    <span>Week 2</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></div>
-                    <span>Week 3</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-purple-100 border border-purple-200"></div>
-                    <span>Week 4</span>
-                  </div>
-                </div>
-              </div>
+                )}
             </PopoverContent>
           </Popover>
 
@@ -166,9 +186,15 @@ export function WeekNavigation({
         </div>
         <div className="text-center mt-2 sm:mt-2">
           <div className="text-sm text-muted-foreground">
-            Week{" "}
-            {Math.ceil(
-              (selectedDate.getDate() - selectedDate.getDay() + 1) / 7
+            {projectWeekInfo ? (
+              <>
+                Week {projectWeekInfo.currentWeek} of {projectWeekInfo.totalWeeks}
+                <div className="text-xs text-muted-foreground mt-1">
+                  ({projectWeekInfo.dateRangeType === 'actual' ? 'Actual' : 'Planned'} Dates)
+                </div>
+              </>
+            ) : (
+              <>Week {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}</>
             )}
           </div>
         </div>

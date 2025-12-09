@@ -17,11 +17,6 @@ interface DayInfo {
   fullLabel: string;
 }
 
-interface Project {
-  id: string;
-  projectName: string;
-}
-
 interface DayEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,7 +29,7 @@ interface DayEditDialogProps {
   onDescriptionChange: (description: string) => void;
   onSave: () => Promise<void>;
   isSaving: boolean;
-  userProjects: Project[];
+  userProjects: Array<{ id: string; projectName: string }>;
   currentProjectId?: string;
   currentProjectName?: string;
 }

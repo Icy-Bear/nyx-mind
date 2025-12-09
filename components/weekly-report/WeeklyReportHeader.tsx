@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
+import { getProjectWeekInfo } from "@/lib/project-date-utils";
 
 interface Member {
   id: string;
@@ -16,17 +17,29 @@ interface WeeklyReportHeaderProps {
   member: Member | null;
   selectedDate: Date;
   currentProjectName?: string;
+  project?: {
+    id: string;
+    projectName: string;
+    plannedStart?: Date | null;
+    plannedEnd?: Date | null;
+    actualStart?: Date | null;
+    actualEnd?: Date | null;
+  };
 }
 
 export function WeeklyReportHeader({
   member,
   selectedDate,
   currentProjectName,
+  project,
 }: WeeklyReportHeaderProps) {
   if (!member) return null;
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
+  
+  // Get project week info for accurate week calculation
+  const projectWeekInfo = project ? getProjectWeekInfo(project, selectedDate) : null;
 
   return (
     <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-primary/5 to-secondary/5">
@@ -53,8 +66,16 @@ export function WeeklyReportHeader({
           variant="secondary"
           className="text-sm self-start sm:self-center shrink-0"
         >
-          Week{" "}
-          {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}
+          {projectWeekInfo ? (
+            <>
+              Week {projectWeekInfo.currentWeek} of {projectWeekInfo.totalWeeks}
+              <div className="text-xs text-muted-foreground mt-1">
+                ({projectWeekInfo.dateRangeType === 'actual' ? 'Actual' : 'Planned'} Dates)
+              </div>
+            </>
+          ) : (
+            <>Week {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}</>
+          )}
         </Badge>
       </div>
     </div>
