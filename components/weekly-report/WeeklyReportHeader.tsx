@@ -34,22 +34,16 @@ export function WeeklyReportHeader({
         <div className="min-w-0 flex-1">
           <div className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <span className="truncate">
-              {member.name}&apos;s Weekly Report
-            </span>
+            <span className="truncate">{member.name}&apos;s Weekly Report</span>
           </div>
           <div className="text-sm sm:text-base text-muted-foreground mt-1">
-            <span className="truncate block sm:inline">{member.email}</span>
-            <span className="hidden sm:inline"> • </span>
-            <span className="block sm:inline">
-              {format(weekStart, "MMM d")} -{" "}
-              {format(weekEnd, "MMM d, yyyy")}
-            </span>
             {currentProjectName && (
               <>
-                <span className="hidden sm:inline"> • </span>
                 <span className="block sm:inline">
-                  Project: <span className="font-medium text-foreground">{currentProjectName}</span>
+                  Project:{" "}
+                  <span className="font-medium text-foreground">
+                    {currentProjectName}
+                  </span>
                 </span>
               </>
             )}
@@ -60,9 +54,7 @@ export function WeeklyReportHeader({
           className="text-sm self-start sm:self-center shrink-0"
         >
           Week{" "}
-          {Math.ceil(
-            (selectedDate.getDate() - selectedDate.getDay() + 1) / 7
-          )}
+          {Math.ceil((selectedDate.getDate() - selectedDate.getDay() + 1) / 7)}
         </Badge>
       </div>
     </div>

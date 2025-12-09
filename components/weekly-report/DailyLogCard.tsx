@@ -74,7 +74,7 @@ export function DailyLogCard({
       onClick={onClick}
       disabled={isLoading || !isDateValid}
     >
-      <div className="flex items-center justify-between w-full">
+      <div className="flex justify-between w-full">
         <span className="font-semibold text-sm text-blue-700">{day.label}</span>
         <div className="flex items-center gap-1">
           {hasErrors && (
@@ -104,7 +104,7 @@ export function DailyLogCard({
           <span className="text-xs text-gray-500">------</span>
         )}
       </div>
-      <div className="text-xs text-gray-600 truncate w-full min-w-0">
+      <div className="text-xs text-gray-600 truncate w-full min-w-0 text-left">
         {description || "No description"}
       </div>
     </Button>
