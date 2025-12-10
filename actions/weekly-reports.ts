@@ -515,8 +515,8 @@ export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date
       throw new Error("Unauthorized");
     }
 
-    // Only admins can view other users' progress
-    if (session.user.role !== "admin") {
+    // Only admins can view other users' progress, but users can view their own
+    if (session.user.role !== "admin" && session.user.id !== userId) {
       throw new Error("Access denied - only admins can view user progress");
     }
 
@@ -584,8 +584,8 @@ export async function getUserTotalHours(userId: string, projectId?: string) {
       throw new Error("Unauthorized");
     }
 
-    // Only admins can view other users' total hours
-    if (session.user.role !== "admin") {
+    // Only admins can view other users' total hours, but users can view their own
+    if (session.user.role !== "admin" && session.user.id !== userId) {
       throw new Error("Access denied - only admins can view user total hours");
     }
 
@@ -625,8 +625,8 @@ export async function getUserWeeklyBreakdown(userId: string, weeksCount: number 
       throw new Error("Unauthorized");
     }
 
-    // Only admins can view other users' weekly breakdown
-    if (session.user.role !== "admin") {
+    // Only admins can view other users' weekly breakdown, but users can view their own
+    if (session.user.role !== "admin" && session.user.id !== userId) {
       throw new Error("Access denied - only admins can view user weekly breakdown");
     }
 

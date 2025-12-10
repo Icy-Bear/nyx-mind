@@ -492,6 +492,7 @@ export default function ProjectPage() {
                       }}
                       isCurrentUser={assignee.id === loggedInUserId}
                       projectId={project.id}
+                      canViewDetails={canOpen}
                       onOpenWeeklyReport={() => {
                         if (!canOpen) {
                           toast.error("You can only view your own details");

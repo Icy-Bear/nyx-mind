@@ -43,6 +43,7 @@ interface EnhancedUserCardProps {
   className?: string;
   projectId?: string;
   onOpenWeeklyReport?: () => void;
+  canViewDetails?: boolean;
 }
 
 export function EnhancedUserCard({
@@ -51,6 +52,7 @@ export function EnhancedUserCard({
   className = "",
   onOpenWeeklyReport,
   projectId,
+  canViewDetails = false,
 }: EnhancedUserCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [totalHours, setTotalHours] = useState<number | null>(null);
@@ -162,7 +164,7 @@ export function EnhancedUserCard({
             >
               {user.role}
             </Badge>
-            {onOpenWeeklyReport && (
+            {onOpenWeeklyReport && canViewDetails && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -177,24 +179,26 @@ export function EnhancedUserCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            disabled={loading}
-            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto"
-          >
-            {isExpanded ? (
-              <ChevronUp className="h-3 w-3" />
-            ) : (
-              <ChevronDown className="h-3 w-3" />
-            )}
-            <span className="ml-1">
-              {isExpanded ? "Hide" : "Show"} Weekly
-            </span>
-          </Button>
-        </div>
+        {canViewDetails && (
+          <div className="flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              disabled={loading}
+              className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto"
+            >
+              {isExpanded ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+              <span className="ml-1">
+                {isExpanded ? "Hide" : "Show"} Weekly
+              </span>
+            </Button>
+          </div>
+        )}
 
         {/* Expanded Section */}
         {isExpanded && (
