@@ -176,23 +176,22 @@ export function EnhancedUserCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-1 justify-between"
             disabled={loading}
+            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto"
           >
-            <span className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Weekly Breakdown
-            </span>
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
+              <ChevronUp className="h-3 w-3" />
             ) : (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
             )}
+            <span className="ml-1">
+              {isExpanded ? "Hide" : "Show"} Weekly
+            </span>
           </Button>
         </div>
 
