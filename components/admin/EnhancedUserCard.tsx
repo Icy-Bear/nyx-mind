@@ -6,18 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  TrendingUp,
+  TrendingDown,
   Calendar,
   BarChart3,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
-import { getUserTotalHours, getUserWeeklyBreakdown } from "@/actions/weekly-reports";
+import {
+  getUserTotalHours,
+  getUserWeeklyBreakdown,
+} from "@/actions/weekly-reports";
 import { toast } from "sonner";
 
 interface WeeklyData {
@@ -41,7 +44,12 @@ interface EnhancedUserCardProps {
   onOpenWeeklyReport?: () => void;
 }
 
-export function EnhancedUserCard({ user, isCurrentUser = false, className = "", onOpenWeeklyReport }: EnhancedUserCardProps) {
+export function EnhancedUserCard({
+  user,
+  isCurrentUser = false,
+  className = "",
+  onOpenWeeklyReport,
+}: EnhancedUserCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [totalHours, setTotalHours] = useState<number | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
@@ -49,14 +57,14 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
 
   const loadData = useCallback(async () => {
     if (loading) return;
-    
+
     setLoading(true);
     try {
       const [total, weekly] = await Promise.all([
         getUserTotalHours(user.id),
-        getUserWeeklyBreakdown(user.id, 12) // Last 12 weeks
+        getUserWeeklyBreakdown(user.id, 12), // Last 12 weeks
       ]);
-      
+
       setTotalHours(total);
       setWeeklyData(weekly);
     } catch (error) {
@@ -75,20 +83,28 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
 
   const stats = useMemo(() => {
     if (weeklyData.length === 0) return null;
-    
-    const totalTarget = weeklyData.reduce((sum, week) => sum + week.targetHours, 0);
-    const totalActual = weeklyData.reduce((sum, week) => sum + week.actualHours, 0);
+
+    const totalTarget = weeklyData.reduce(
+      (sum, week) => sum + week.targetHours,
+      0
+    );
+    const totalActual = weeklyData.reduce(
+      (sum, week) => sum + week.actualHours,
+      0
+    );
     const avgWeekly = totalActual / weeklyData.length;
-    const weeksMetTarget = weeklyData.filter(week => week.actualHours >= week.targetHours).length;
+    const weeksMetTarget = weeklyData.filter(
+      (week) => week.actualHours >= week.targetHours
+    ).length;
     const consistencyRate = (weeksMetTarget / weeklyData.length) * 100;
-    
+
     return {
       totalTarget,
       totalActual,
       avgWeekly,
       consistencyRate,
       weeksMetTarget,
-      totalWeeks: weeklyData.length
+      totalWeeks: weeklyData.length,
     };
   }, [weeklyData]);
 
@@ -105,7 +121,11 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${isCurrentUser ? "ring-2 ring-primary" : ""} ${className}`}>
+    <Card
+      className={`transition-all duration-200 hover:shadow-md ${
+        isCurrentUser ? "ring-2 ring-primary" : ""
+      } ${className}`}
+    >
       <CardContent className="p-4">
         {/* Header Section */}
         <div className="flex items-center justify-between mb-3">
@@ -120,17 +140,25 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
               <h3 className="font-semibold text-base truncate flex items-center gap-2">
                 {user.name}
                 {isCurrentUser && (
-                  <Badge variant="outline" className="text-xs border-primary text-primary flex-shrink-0">
+                  <Badge
+                    variant="outline"
+                    className="text-xs border-primary text-primary flex-shrink-0"
+                  >
                     You
                   </Badge>
                 )}
               </h3>
-              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                {user.email}
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Badge variant={user.role === "admin" ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={user.role === "admin" ? "default" : "secondary"}
+              className="text-xs"
+            >
               {user.role}
             </Badge>
             {onOpenWeeklyReport && (
@@ -144,37 +172,6 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
                 <ExternalLink className="h-4 w-4" />
               </Button>
             )}
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="bg-muted/30 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Clock className="h-3 w-3" />
-              Total Hours
-            </div>
-            <div className="text-lg font-bold">
-              {loading ? (
-                <div className="animate-pulse bg-muted rounded h-6 w-16"></div>
-              ) : (
-                totalHours?.toFixed(1) || "0.0"
-              )}
-            </div>
-          </div>
-          
-          <div className="bg-muted/30 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <BarChart3 className="h-3 w-3" />
-              Avg/Week
-            </div>
-            <div className="text-lg font-bold">
-              {loading ? (
-                <div className="animate-pulse bg-muted rounded h-6 w-16"></div>
-              ) : (
-                stats?.avgWeekly.toFixed(1) || "0.0"
-              )}
-            </div>
           </div>
         </div>
 
@@ -197,18 +194,6 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
               <ChevronDown className="h-4 w-4" />
             )}
           </Button>
-          
-          {onOpenWeeklyReport && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={onOpenWeeklyReport}
-              className="px-3"
-              title="Open Detailed Weekly Report"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          )}
         </div>
 
         {/* Expanded Section */}
@@ -225,23 +210,58 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
               </div>
             ) : weeklyData.length > 0 ? (
               <>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <Clock className="h-3 w-3" />
+                      Total Hours
+                    </div>
+                    <div className="text-lg font-bold">
+                      {loading ? (
+                        <div className="animate-pulse bg-muted rounded h-6 w-16"></div>
+                      ) : (
+                        totalHours?.toFixed(1) || "0.0"
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <BarChart3 className="h-3 w-3" />
+                      Avg/Week
+                    </div>
+                    <div className="text-lg font-bold">
+                      {loading ? (
+                        <div className="animate-pulse bg-muted rounded h-6 w-16"></div>
+                      ) : (
+                        stats?.avgWeekly.toFixed(1) || "0.0"
+                      )}
+                    </div>
+                  </div>
+                </div>
                 {/* Summary Stats */}
                 {stats && (
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2">
-                      <div className="text-xs text-green-600 dark:text-green-400">Target Met</div>
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        Target Met
+                      </div>
                       <div className="text-sm font-bold text-green-700 dark:text-green-300">
                         {stats.weeksMetTarget}/{stats.totalWeeks}
                       </div>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2">
-                      <div className="text-xs text-blue-600 dark:text-blue-400">Consistency</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">
+                        Consistency
+                      </div>
                       <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
                         {stats.consistencyRate.toFixed(0)}%
                       </div>
                     </div>
                     <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2">
-                      <div className="text-xs text-purple-600 dark:text-purple-400">Total Target</div>
+                      <div className="text-xs text-purple-600 dark:text-purple-400">
+                        Total Target
+                      </div>
                       <div className="text-sm font-bold text-purple-700 dark:text-purple-300">
                         {stats.totalTarget.toFixed(0)}h
                       </div>
@@ -256,7 +276,8 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">
-                            Week of {format(new Date(week.weekStartDate), "MMM dd")}
+                            Week of{" "}
+                            {format(new Date(week.weekStartDate), "MMM dd")}
                           </span>
                           {week.actualHours >= week.targetHours ? (
                             <TrendingUp className="h-3 w-3 text-green-600" />
@@ -268,8 +289,10 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
                           <span className="text-xs text-muted-foreground">
                             {week.actualHours.toFixed(1)}/{week.targetHours}h
                           </span>
-                          <Badge 
-                            variant={getProgressVariant(week.progressPercentage)}
+                          <Badge
+                            variant={getProgressVariant(
+                              week.progressPercentage
+                            )}
                             className="text-xs"
                           >
                             {week.progressPercentage.toFixed(0)}%
@@ -277,13 +300,17 @@ export function EnhancedUserCard({ user, isCurrentUser = false, className = "", 
                         </div>
                       </div>
                       <div className="relative">
-                        <Progress 
-                          value={Math.min(week.progressPercentage, 100)} 
+                        <Progress
+                          value={Math.min(week.progressPercentage, 100)}
                           className="h-2"
                         />
-                        <div 
-                          className={`absolute top-0 left-0 h-full rounded-full ${getProgressColor(week.progressPercentage)} transition-all duration-300`}
-                          style={{ width: `${Math.min(week.progressPercentage, 100)}%` }}
+                        <div
+                          className={`absolute top-0 left-0 h-full rounded-full ${getProgressColor(
+                            week.progressPercentage
+                          )} transition-all duration-300`}
+                          style={{
+                            width: `${Math.min(week.progressPercentage, 100)}%`,
+                          }}
                         />
                       </div>
                     </div>
