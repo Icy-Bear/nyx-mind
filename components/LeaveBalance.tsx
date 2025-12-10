@@ -67,50 +67,10 @@ export function LeaveBalance({ balance }: LeaveBalanceProps) {
           </CardContent>
         </Card>
 
-        {/* Total Balance Card */}
-        <Card className="relative overflow-hidden sm:col-span-2 lg:col-span-1 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
-            <div className="p-2 bg-primary/20 rounded-full">
-              <Calendar className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-primary">
-              {totalBalance}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total available days
-            </p>
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <span>CL: {balance.clBalance}</span>
-              <div className="w-2 h-2 bg-red-600 rounded-full ml-2"></div>
-              <span>ML: {balance.mlBalance}</span>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
-      {/* Mobile Summary Card - Only visible on small screens */}
-      <Card className="sm:hidden bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-sm">Total Leave Balance</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {balance.clBalance} CL + {balance.mlBalance} ML
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-primary">
-                {totalBalance}
-              </div>
-              <div className="text-xs text-muted-foreground">days</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }

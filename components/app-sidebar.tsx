@@ -4,14 +4,11 @@ import * as React from "react";
 import {
   IconDashboard,
   IconReport,
-  IconSearch,
-  IconSettings,
   IconUser,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -42,18 +39,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: IconUser,
       }] : []),
     ],
-    navSecondary: [
-      {
-        title: "Settings",
-        url: "#",
-        icon: IconSettings,
-      },
-      {
-        title: "Search",
-        url: "#",
-        icon: IconSearch,
-      },
-    ],
     documents: [
       {
         name: "Leave",
@@ -81,7 +66,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={sideNavData.navMain} />
         <NavDocuments items={sideNavData.documents} />
-        <NavSecondary items={sideNavData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         {isPending ? (

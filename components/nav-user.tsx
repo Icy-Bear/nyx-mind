@@ -75,11 +75,11 @@ export function NavUser({ user }: { user: User }) {
                 <AvatarFallback className="rounded-lg">
                   {user?.name
                     ? user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()
                     : "CN"}
                 </AvatarFallback>
               </Avatar>
@@ -130,14 +130,6 @@ export function NavUser({ user }: { user: User }) {
               >
                 <IconUserCircle />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

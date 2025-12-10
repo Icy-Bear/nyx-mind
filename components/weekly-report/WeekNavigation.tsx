@@ -15,9 +15,8 @@ import {
   ChevronDownIcon,
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
-import { 
-  isDateInAnyRange, 
-  DateRange, 
+import {
+  DateRange,
   getProjectWeekInfo,
   getProjectWeekModifier,
   getProjectWeekClassName
@@ -64,18 +63,6 @@ export function WeekNavigation({
     onDateChange(new Date(selectedDate.getTime() + 7 * 24 * 60 * 60 * 1000));
   };
 
-  const isPreviousWeekDisabled = projectDateRanges.length > 0 &&
-    !isDateInAnyRange(
-      new Date(selectedDate.getTime() - 7 * 24 * 60 * 60 * 1000),
-      projectDateRanges
-    );
-
-  const isNextWeekDisabled = projectDateRanges.length > 0 &&
-    !isDateInAnyRange(
-      new Date(selectedDate.getTime() + 7 * 24 * 60 * 60 * 1000),
-      projectDateRanges
-    );
-
   return (
     <Card>
       <CardContent className="pt-4 sm:pt-6">
@@ -84,7 +71,6 @@ export function WeekNavigation({
             variant="outline"
             size="sm"
             className="w-full sm:w-auto"
-            disabled={isPreviousWeekDisabled}
             onClick={goToPreviousWeek}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -136,39 +122,39 @@ export function WeekNavigation({
                   } : {}
                 }
               />
-                {projectWeekInfo && (
-                  <div className="p-3 border-t bg-muted/30">
-                    <div className="text-xs font-medium text-muted-foreground mb-2 text-center">
-                      Project Week Colors
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></div>
-                        <span>Week 1</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-green-100 border border-green-200"></div>
-                        <span>Week 2</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></div>
-                        <span>Week 3</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-purple-100 border border-purple-200"></div>
-                        <span>Week 4</span>
-                      </div>
-                      {projectWeekInfo.totalWeeks > 4 && (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-orange-100 border border-orange-200"></div>
-                            <span>Week 5+</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
+              {projectWeekInfo && (
+                <div className="p-3 border-t bg-muted/30">
+                  <div className="text-xs font-medium text-muted-foreground mb-2 text-center">
+                    Project Week Colors
                   </div>
-                )}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></div>
+                      <span>Week 1</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-green-100 border border-green-200"></div>
+                      <span>Week 2</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></div>
+                      <span>Week 3</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-purple-100 border border-purple-200"></div>
+                      <span>Week 4</span>
+                    </div>
+                    {projectWeekInfo.totalWeeks > 4 && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded bg-orange-100 border border-orange-200"></div>
+                          <span>Week 5+</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </PopoverContent>
           </Popover>
 
@@ -176,7 +162,6 @@ export function WeekNavigation({
             variant="outline"
             size="sm"
             className="w-full sm:w-auto"
-            disabled={isNextWeekDisabled}
             onClick={goToNextWeek}
           >
             <span className="hidden sm:inline">Next</span>
