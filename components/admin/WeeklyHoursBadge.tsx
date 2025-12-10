@@ -49,12 +49,13 @@ export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBad
       setProgress(progressData);
 
       // Extract project breakdown from daily entries
-      if (reportData?.hours && reportData?.projects) {
+      if (reportData?.entries) {
         const projectMap = new Map<string, number>();
-        
-        Object.entries(reportData.hours).forEach(([day, hours]) => {
+
+        reportData.entries.forEach((entry) => {
+          const hours = parseFloat(entry.hours);
           if (hours > 0) {
-            const projectName = reportData.projects[day] || "Unknown Project";
+            const projectName = entry.projectName || "Unknown Project";
             projectMap.set(
               projectName,
               (projectMap.get(projectName) || 0) + hours
@@ -107,8 +108,8 @@ export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBad
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={`text-xs cursor-pointer hover:bg-accent transition-colors ${className}`}
             onClick={() => setShowDetails(!showDetails)}
           >
@@ -142,7 +143,7 @@ export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBad
                 </span>
               </div>
             </div>
-            
+
             {projectBreakdown.length > 0 && (
               <div className="border-t pt-2">
                 <div className="text-xs font-medium mb-1">Project Breakdown:</div>
@@ -161,7 +162,7 @@ export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBad
                 </div>
               </div>
             )}
-            
+
             <div className="text-xs text-muted-foreground">
               Week of {new Date(progress.weekStartDate).toLocaleDateString()}
             </div>

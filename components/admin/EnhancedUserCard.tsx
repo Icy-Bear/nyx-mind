@@ -41,6 +41,7 @@ interface EnhancedUserCardProps {
   };
   isCurrentUser?: boolean;
   className?: string;
+  projectId?: string;
   onOpenWeeklyReport?: () => void;
 }
 
@@ -49,6 +50,7 @@ export function EnhancedUserCard({
   isCurrentUser = false,
   className = "",
   onOpenWeeklyReport,
+  projectId,
 }: EnhancedUserCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [totalHours, setTotalHours] = useState<number | null>(null);
@@ -61,8 +63,8 @@ export function EnhancedUserCard({
     setLoading(true);
     try {
       const [total, weekly] = await Promise.all([
-        getUserTotalHours(user.id),
-        getUserWeeklyBreakdown(user.id, 12), // Last 12 weeks
+        getUserTotalHours(user.id, projectId),
+        getUserWeeklyBreakdown(user.id, 12, projectId), // Last 12 weeks
       ]);
 
       setTotalHours(total);
@@ -73,7 +75,7 @@ export function EnhancedUserCard({
     } finally {
       setLoading(false);
     }
-  }, [user.id, loading]);
+  }, [user.id, loading, projectId]);
 
   useEffect(() => {
     if (isExpanded && (totalHours === null || weeklyData.length === 0)) {
@@ -122,9 +124,8 @@ export function EnhancedUserCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-md ${
-        isCurrentUser ? "ring-2 ring-primary" : ""
-      } ${className}`}
+      className={`transition-all duration-200 hover:shadow-md ${isCurrentUser ? "ring-2 ring-primary" : ""
+        } ${className}`}
     >
       <CardContent className="p-4">
         {/* Header Section */}

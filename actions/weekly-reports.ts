@@ -150,11 +150,11 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string, curr
       .select()
       .from(dailyTimeEntries)
       .where(
-        currentProjectId 
+        currentProjectId
           ? and(
-              eq(dailyTimeEntries.weeklyReportId, report.id),
-              eq(dailyTimeEntries.projectName, currentProjectId)
-            )
+            eq(dailyTimeEntries.weeklyReportId, report.id),
+            eq(dailyTimeEntries.projectName, currentProjectId)
+          )
           : eq(dailyTimeEntries.weeklyReportId, report.id)
       )
       .orderBy(dailyTimeEntries.dayOfWeek);
@@ -193,6 +193,7 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string, curr
       descriptions,
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
+      entries,
     };
   } catch (error) {
     console.error("Error fetching weekly report:", error);
@@ -256,7 +257,7 @@ export async function saveDailyEntry(data: {
 
     // Use currentProjectId if provided, otherwise use projectName from data
     const finalProjectName = data.currentProjectId || data.projectName;
-    
+
     // Upsert the daily entry
     await db
       .insert(dailyTimeEntries)
@@ -268,7 +269,7 @@ export async function saveDailyEntry(data: {
         description: data.description,
       })
       .onConflictDoUpdate({
-        target: [dailyTimeEntries.weeklyReportId, dailyTimeEntries.dayOfWeek],
+        target: [dailyTimeEntries.weeklyReportId, dailyTimeEntries.dayOfWeek, dailyTimeEntries.projectName],
         set: {
           hours: data.hours.toFixed(2),
           projectName: finalProjectName,
@@ -573,7 +574,7 @@ export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date
   }
 }
 
-export async function getUserTotalHours(userId: string) {
+export async function getUserTotalHours(userId: string, projectId?: string) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -596,7 +597,10 @@ export async function getUserTotalHours(userId: string) {
       .from(weeklyReports)
       .leftJoin(
         dailyTimeEntries,
-        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+        and(
+          eq(weeklyReports.id, dailyTimeEntries.weeklyReportId),
+          projectId ? eq(dailyTimeEntries.projectName, projectId) : undefined
+        )
       )
       .where(eq(weeklyReports.userId, userId))
       .limit(1);
@@ -611,7 +615,7 @@ export async function getUserTotalHours(userId: string) {
   }
 }
 
-export async function getUserWeeklyBreakdown(userId: string, weeksCount: number = 12) {
+export async function getUserWeeklyBreakdown(userId: string, weeksCount: number = 12, projectId?: string) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -636,7 +640,10 @@ export async function getUserWeeklyBreakdown(userId: string, weeksCount: number 
       .from(weeklyReports)
       .leftJoin(
         dailyTimeEntries,
-        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+        and(
+          eq(weeklyReports.id, dailyTimeEntries.weeklyReportId),
+          projectId ? eq(dailyTimeEntries.projectName, projectId) : undefined
+        )
       )
       .where(eq(weeklyReports.userId, userId))
       .groupBy(weeklyReports.weekStartDate, weeklyReports.targetHours)

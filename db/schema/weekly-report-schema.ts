@@ -45,7 +45,7 @@ export const dailyTimeEntries = pgTable("daily_time_entries", {
     .$onUpdate(() => new Date())
     .notNull(),
 }, (table) => ({
-  reportDayUnique: uniqueIndex("daily_time_entries_report_day_unique").on(table.weeklyReportId, table.dayOfWeek),
+  reportDayProjectUnique: uniqueIndex("daily_time_entries_report_day_project_unique").on(table.weeklyReportId, table.dayOfWeek, table.projectName),
 }));
 
 export type SelectWeeklyReport = typeof weeklyReports.$inferSelect;

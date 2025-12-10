@@ -479,7 +479,7 @@ export default function ProjectPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sortedAssignees.map((assignee) => {
                   const canOpen = isAdmin || assignee.id === loggedInUserId;
-                  
+
                   return (
                     <EnhancedUserCard
                       key={assignee.id}
@@ -491,6 +491,7 @@ export default function ProjectPage() {
                         createdAt: assignee.createdAt
                       }}
                       isCurrentUser={assignee.id === loggedInUserId}
+                      projectId={project.id}
                       onOpenWeeklyReport={() => {
                         if (!canOpen) {
                           toast.error("You can only view your own details");
