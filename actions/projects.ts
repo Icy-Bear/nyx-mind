@@ -2,6 +2,7 @@
 
 import { db } from "@/db/drizzle";
 import { projects, projectAssignees, projectStatusEnum } from "@/db/schema/project-schema";
+import { dailyTimeEntries } from "@/db/schema/weekly-report-schema";
 import { user } from "@/db/schema/auth-schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -353,6 +354,22 @@ export async function deleteProject(projectId: string) {
 
     if (!session || session.user.role !== "admin") {
       throw new Error("Unauthorized - Admin access required");
+    }
+
+    // Get project name first to delete related time entries
+    const project = await db
+      .select({ projectName: projects.projectName })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    if (project.length > 0) {
+      const { projectName } = project[0];
+
+      // Delete related daily time entries
+      await db
+        .delete(dailyTimeEntries)
+        .where(eq(dailyTimeEntries.projectName, projectName));
     }
 
     // Delete project assignments first (foreign key constraint)

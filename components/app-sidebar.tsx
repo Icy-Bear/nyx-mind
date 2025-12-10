@@ -5,6 +5,7 @@ import {
   IconDashboard,
   IconReport,
   IconUser,
+  IconCommand,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -52,19 +53,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
+            <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <span className="text-base font-semibold">NyxMinds</span>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <IconCommand className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">NyxMinds</span>
+                  <span className="truncate text-xs">Enterprise</span>
+                </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={sideNavData.navMain} />
+        <NavMain items={sideNavData.navMain} label="Platform" />
         <NavDocuments items={sideNavData.documents} />
       </SidebarContent>
       <SidebarFooter>
