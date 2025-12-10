@@ -21,16 +21,16 @@ export async function createProject(data: {
     });
 
     if (!session || session.user.role !== "admin") {
-      throw new Error("Unauthorized - Admin access required");
+      throw new Error("You do not have permission to perform this action. Admin access is required.");
     }
 
     // Validate that both planned start and end dates are provided
     if (!data.plannedStart || !data.plannedEnd) {
-      throw new Error("Both planned start and end dates are required");
+      throw new Error("Please provide both a planned start date and a planned end date.");
     }
 
     if (data.plannedStart >= data.plannedEnd) {
-      throw new Error("Planned end date must be after start date");
+      throw new Error("The planned end date must be after the start date.");
     }
 
     const projectId = crypto.randomUUID();
@@ -63,7 +63,7 @@ export async function getProjects(userId?: string) {
     });
 
     if (!session) {
-      throw new Error("Unauthorized");
+      throw new Error("You must be logged in to view projects.");
     }
 
     const currentUserId = userId || session.user.id;
@@ -128,7 +128,7 @@ export async function getProjectDetails(projectId: string) {
     });
 
     if (!session) {
-      throw new Error("Unauthorized");
+      throw new Error("You must be logged in to view project details.");
     }
 
     const isAdmin = session.user.role === "admin";
@@ -141,7 +141,7 @@ export async function getProjectDetails(projectId: string) {
       .limit(1);
 
     if (projectData.length === 0) {
-      throw new Error("Project not found");
+      throw new Error("The requested project could not be found.");
     }
 
     const project = projectData[0];
@@ -160,7 +160,7 @@ export async function getProjectDetails(projectId: string) {
         .limit(1);
 
       if (assignment.length === 0) {
-        throw new Error("Access denied - not assigned to this project");
+        throw new Error("You do not have access to this project. You must be assigned to it.");
       }
     }
 
@@ -317,7 +317,7 @@ export async function updateProject(projectId: string, data: {
 
     // Prepare update data
     const updateData: Record<string, unknown> = {};
-    
+
     if (data.projectName !== undefined) updateData.projectName = data.projectName;
     if (data.summary !== undefined) updateData.summary = data.summary;
     if (data.status !== undefined) updateData.status = data.status;

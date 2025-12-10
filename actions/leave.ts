@@ -154,7 +154,7 @@ export async function applyLeave(data: {
 
     // Determine target userId
     let targetUserId = session.user.id;
-    
+
     // If userId is provided, verify admin is applying for someone else
     if (data.userId) {
       if (session.user.role !== "admin") {
@@ -165,14 +165,14 @@ export async function applyLeave(data: {
 
     // Validate dates
     if (data.fromDate > data.toDate) {
-      throw new Error("From date cannot be after to date");
+      throw new Error("The start date cannot be after the end date. Please check your dates.");
     }
 
     // Calculate working days
     const totalDays = calculateWorkingDays(data.fromDate, data.toDate);
 
     if (totalDays === 0) {
-      throw new Error("No working days in the selected date range");
+      throw new Error("The selected date range does not contain any working days (weekends are excluded). Please select working days.");
     }
 
     // Check balance
@@ -187,8 +187,11 @@ export async function applyLeave(data: {
         data.leaveType === "CL"
           ? requiredBalance.toFixed(2)
           : requiredBalance.toString();
+
+      const leaveTypeName = data.leaveType === "CL" ? "Casual Leave (CL)" : "Medical Leave (ML)";
+
       throw new Error(
-        `Insufficient ${data.leaveType} balance. Available: ${formattedBalance}, Required: ${totalDays}`
+        `You do not have enough ${leaveTypeName}. You have ${formattedBalance} days available, but you are trying to apply for ${totalDays} days.`
       );
     }
 

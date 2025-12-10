@@ -33,7 +33,7 @@ export async function saveWeeklyReport(data: {
     });
 
     if (!session) {
-      throw new Error("Unauthorized");
+      throw new Error("You must be logged in to perform this action.");
     }
 
     const userId = session.user.id;
@@ -121,7 +121,7 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string, curr
 
     // If viewing another user's report, must be admin
     if (userId && userId !== session.user.id && !isAdmin) {
-      throw new Error("Access denied - can only view your own reports");
+      throw new Error("You do not have permission to view other users' reports.");
     }
 
     // Get the weekly report
@@ -405,7 +405,7 @@ export async function setTargetHours(data: {
 
     // Only admins can set target hours
     if (session.user.role !== "admin") {
-      throw new Error("Access denied - only admins can set target hours");
+      throw new Error("You do not have permission to set target hours. Admin access is required.");
     }
 
     // Check if weekly report exists
@@ -466,7 +466,7 @@ export async function getUserTargetHours(userId: string, weekStartDate?: Date) {
 
     // Only admins can view target hours
     if (session.user.role !== "admin") {
-      throw new Error("Access denied - only admins can view target hours");
+      throw new Error("You do not have permission to view target hours. Admin access is required.");
     }
 
     const whereConditions = [eq(weeklyReports.userId, userId)];
@@ -517,7 +517,7 @@ export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date
 
     // Only admins can view other users' progress, but users can view their own
     if (session.user.role !== "admin" && session.user.id !== userId) {
-      throw new Error("Access denied - only admins can view user progress");
+      throw new Error("You do not have permission to view this user's progress.");
     }
 
     const targetDate = weekStartDate || getWeekStart(new Date());
@@ -586,7 +586,7 @@ export async function getUserTotalHours(userId: string, projectId?: string) {
 
     // Only admins can view other users' total hours, but users can view their own
     if (session.user.role !== "admin" && session.user.id !== userId) {
-      throw new Error("Access denied - only admins can view user total hours");
+      throw new Error("You do not have permission to view this user's total hours.");
     }
 
     // Get total hours worked across all time
@@ -627,7 +627,7 @@ export async function getUserWeeklyBreakdown(userId: string, weeksCount: number 
 
     // Only admins can view other users' weekly breakdown, but users can view their own
     if (session.user.role !== "admin" && session.user.id !== userId) {
-      throw new Error("Access denied - only admins can view user weekly breakdown");
+      throw new Error("You do not have permission to view this user's weekly breakdown.");
     }
 
     // Get weekly reports for the last N weeks
