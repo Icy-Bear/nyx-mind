@@ -27,25 +27,99 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BadgeCheck,
   Camera,
-  Eye,
-  EyeOff,
   Mail,
-  Shield,
   Trash2,
   User,
   Smartphone,
 } from "lucide-react";
-import { deleteUser, useSession } from "@/lib/auth-client";
+import {
+  IconBrandWindows,
+  IconBrandApple,
+  IconBrandAndroid,
+  IconBrandChrome,
+  IconBrandFirefox,
+  IconBrandSafari,
+  IconBrandEdge,
+  IconDeviceDesktop,
+  IconDeviceMobile,
+  IconWorld,
+  IconBrandOpera,
+} from "@tabler/icons-react";
+import { deleteUser, useSession, listSessions, revokeSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 
+const parseUserAgent = (userAgent: string) => {
+  if (!userAgent) return { browser: "Unknown", os: "Unknown", type: "Unknown" };
+
+  let browser = "Unknown";
+  let os = "Unknown";
+  let type = "Desktop";
+
+  // Browser
+  if (/edg/i.test(userAgent)) browser = "Edge";
+  else if (/chrome/i.test(userAgent) && !/edg/i.test(userAgent))
+    browser = "Chrome";
+  else if (/firefox/i.test(userAgent)) browser = "Firefox";
+  else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent))
+    browser = "Safari";
+  else if (/opera|opr/i.test(userAgent)) browser = "Opera";
+
+  // OS
+  if (/windows/i.test(userAgent)) os = "Windows";
+  else if (/mac/i.test(userAgent) && !/iphone|ipad|ipod/i.test(userAgent))
+    os = "macOS";
+  else if (/linux/i.test(userAgent) && !/android/i.test(userAgent)) os = "Linux";
+  else if (/android/i.test(userAgent)) {
+    os = "Android";
+    type = "Mobile";
+  } else if (/iphone|ipad|ipod/i.test(userAgent)) {
+    os = "iOS";
+    type = "Mobile";
+  }
+
+  return { browser, os, type };
+};
+
+const getBrowserIcon = (browser: string) => {
+  switch (browser) {
+    case "Chrome":
+      return IconBrandChrome;
+    case "Firefox":
+      return IconBrandFirefox;
+    case "Safari":
+      return IconBrandSafari;
+    case "Edge":
+      return IconBrandEdge;
+    case "Opera":
+      return IconBrandOpera;
+    default:
+      return IconWorld;
+  }
+};
+
+const getOSIcon = (os: string) => {
+  switch (os) {
+    case "Windows":
+      return IconBrandWindows;
+    case "macOS":
+      return IconBrandApple;
+    case "iOS":
+      return IconBrandApple;
+    case "Android":
+      return IconBrandAndroid;
+    default:
+      return IconDeviceDesktop;
+  }
+};
+
 export default function AccountPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const { isPending, data } = useSession();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
@@ -53,6 +127,31 @@ export default function AccountPage() {
     username: "",
     bio: "Full-stack developer passionate about building great user experiences.",
   });
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      setIsLoadingSessions(true);
+      try {
+        const res = await listSessions();
+        setSessions(res.data || []);
+      } catch (error) {
+        console.error("Failed to fetch sessions:", error);
+      } finally {
+        setIsLoadingSessions(false);
+      }
+    };
+    fetchSessions();
+  }, []);
+
+  const handleRevokeSession = async (token: string) => {
+    try {
+      await revokeSession({ token });
+      const res = await listSessions();
+      setSessions(res.data || []);
+    } catch (error) {
+      console.error("Failed to revoke session:", error);
+    }
+  };
 
   // Update profile data when session data is available
   useEffect(() => {
@@ -99,14 +198,10 @@ export default function AccountPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full max-w-6xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 mb-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mb-6">
           <TabsTrigger value="profile" className="text-xs sm:text-sm">
             <User className="h-4 w-4 sm:mr-2 hidden sm:inline" />
             Profile
-          </TabsTrigger>
-          <TabsTrigger value="security" className="text-xs sm:text-sm">
-            <Shield className="h-4 w-4 sm:mr-2 hidden sm:inline" />
-            Security
           </TabsTrigger>
           <TabsTrigger
             value="devices"
@@ -115,13 +210,15 @@ export default function AccountPage() {
             <Smartphone className="h-4 w-4 mr-2" />
             Devices
           </TabsTrigger>
-          <TabsTrigger
-            value="danger"
-            className="text-xs sm:text-sm text-red-600 flex"
-          >
-            <Trash2 className="h-4 w-4 sm:mr-2 sm:inline" />
-            Danger
-          </TabsTrigger>
+          {data?.user.role === "admin" && (
+            <TabsTrigger
+              value="danger"
+              className="text-xs sm:text-sm text-red-600 flex"
+            >
+              <Trash2 className="h-4 w-4 sm:mr-2 sm:inline" />
+              Danger
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -317,9 +414,9 @@ export default function AccountPage() {
                   <Badge variant="secondary">
                     {data?.user.createdAt
                       ? new Date(data.user.createdAt).toLocaleDateString(
-                          "en-US",
-                          { month: "short", year: "numeric" }
-                        )
+                        "en-US",
+                        { month: "short", year: "numeric" }
+                      )
                       : "Unknown"}
                   </Badge>
                 </div>
@@ -356,134 +453,6 @@ export default function AccountPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Password Change */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Change Password
-                </CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="currentPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter current password"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="Enter new password"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm new password"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <Button className="w-full sm:w-auto">Update Password</Button>
-              </CardContent>
-            </Card>
-
-            {/* Two-Factor Authentication */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Two-Factor Authentication</CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="font-medium">Authenticator App</p>
-                    <p className="text-sm text-muted-foreground">
-                      Use an authenticator app to generate codes
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Enable
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="font-medium">SMS Authentication</p>
-                    <p className="text-sm text-muted-foreground">
-                      Receive codes via SMS message
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Enable
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         <TabsContent value="devices" className="space-y-6">
           <Card>
@@ -497,114 +466,150 @@ export default function AccountPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-full">
-                      <Smartphone className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">iPhone 14 Pro</p>
-                      <p className="text-sm text-muted-foreground">
-                        Last active: 2 hours ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">Current</Badge>
-                    <Button variant="outline" size="sm">
-                      Remove
-                    </Button>
-                  </div>
+              {isLoadingSessions ? (
+                <div className="flex justify-center p-4">
+                  <Spinner />
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  {sessions.map((session) => {
+                    const isCurrent = session.token === data?.session?.token;
+                    const { browser, os, type } = parseUserAgent(
+                      session.userAgent || ""
+                    );
+                    const BrowserIcon = getBrowserIcon(browser);
+                    const OSIcon = getOSIcon(os);
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Smartphone className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">MacBook Pro</p>
-                      <p className="text-sm text-muted-foreground">
-                        Last active: 1 day ago
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="danger" className="space-y-6">
-          <Card className="border-red-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
-                <Trash2 className="h-5 w-5" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription>
-                Irreversible and destructive actions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-red-900">Delete Account</h3>
-                  <p className="text-sm text-red-700">
-                    Permanently delete your account and all associated data.
-                    This action cannot be undone.
-                  </p>
-                </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="destructive" className="mt-4">
-                      Delete Account
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Are you absolutely sure?</DialogTitle>
-                      <DialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete your account and remove your data from our
-                        servers.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-delete">
-                          Type &quot;DELETE&quot; to confirm
-                        </Label>
-                        <Input
-                          id="confirm-delete"
-                          placeholder="DELETE"
-                          value={deleteConfirmation}
-                          onChange={(e) =>
-                            setDeleteConfirmation(e.target.value)
-                          }
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline">Cancel</Button>
-                      <Button
-                        variant="destructive"
-                        onClick={handleDeleteAccount}
-                        disabled={deleteConfirmation !== "DELETE" || isDeleting}
+                    return (
+                      <div
+                        key={session.token}
+                        className="flex items-center justify-between p-4 border rounded-lg"
                       >
-                        {isDeleting ? "Deleting..." : "Delete Account"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                        <div className="flex items-center space-x-4">
+                          <div
+                            className={`relative p-2 rounded-full ${isCurrent ? "bg-green-100" : "bg-blue-100"
+                              }`}
+                          >
+                            <BrowserIcon
+                              className={`h-6 w-6 ${isCurrent ? "text-green-600" : "text-blue-600"
+                                }`}
+                            />
+                            <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
+                              <OSIcon className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">
+                                {browser} on {os}
+                              </p>
+                              {type === "Mobile" ? (
+                                <IconDeviceMobile className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <IconDeviceDesktop className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(session.createdAt).toLocaleDateString()}
+                              {session.ipAddress && ` • ${session.ipAddress}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {isCurrent ? (
+                            <Badge variant="secondary">Current</Badge>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRevokeSession(session.token)}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {sessions.length === 0 && (
+                    <p className="text-center text-muted-foreground">
+                      No active sessions found.
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
+
+        {data?.user.role === "admin" && (
+          <TabsContent value="danger" className="space-y-6">
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <Trash2 className="h-5 w-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Irreversible and destructive actions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-red-900">Delete Account</h3>
+                    <p className="text-sm text-red-700">
+                      Permanently delete your account and all associated data.
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive" className="mt-4">
+                        Delete Account
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Are you absolutely sure?</DialogTitle>
+                        <DialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete your account and remove your data from our
+                          servers.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="confirm-delete">
+                            Type &quot;DELETE&quot; to confirm
+                          </Label>
+                          <Input
+                            id="confirm-delete"
+                            placeholder="DELETE"
+                            value={deleteConfirmation}
+                            onChange={(e) =>
+                              setDeleteConfirmation(e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline">Cancel</Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleDeleteAccount}
+                          disabled={deleteConfirmation !== "DELETE" || isDeleting}
+                        >
+                          {isDeleting ? "Deleting..." : "Delete Account"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
