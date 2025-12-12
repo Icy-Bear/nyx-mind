@@ -113,13 +113,18 @@ export function HeaderLeaveDialog({ onSuccess }: HeaderLeaveDialogProps) {
   async function onSubmit(values: ApplyLeave) {
     try {
       setIsPending(true);
-      await applyLeave({
+      const result = await applyLeave({
         userId: values.userId !== session?.user.id ? values.userId : undefined, // Only send userId if it's different from current user
         leaveType: values.leaveType,
         fromDate: new Date(values.fromDate),
         toDate: new Date(values.toDate),
         reason: values.reason,
       });
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to submit leave application");
+        return;
+      }
 
       const isForOtherUser = values.userId && values.userId !== session?.user.id;
       toast.success(
