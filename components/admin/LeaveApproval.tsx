@@ -42,15 +42,18 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
   const handleApprove = async (requestId: string) => {
     try {
       setProcessing(requestId);
-      await approveLeave(requestId);
+      const result = await approveLeave(requestId);
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to approve request");
+        return;
+      }
+
       toast.success("Leave request approved");
       onUpdate?.();
     } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Failed to approve request");
-      }
+      console.error("Unexpected error:", err);
+      toast.error("An unexpected error occurred");
     } finally {
       setProcessing(null);
     }
@@ -59,15 +62,18 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
   const handleReject = async (requestId: string) => {
     try {
       setProcessing(requestId);
-      await rejectLeave(requestId);
+      const result = await rejectLeave(requestId);
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to reject request");
+        return;
+      }
+
       toast.success("Leave request rejected");
       onUpdate?.();
     } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Failed to reject request");
-      }
+      console.error("Unexpected error:", err);
+      toast.error("An unexpected error occurred");
     } finally {
       setProcessing(null);
     }
@@ -136,8 +142,8 @@ export function LeaveApproval({ requests, onUpdate }: LeaveApprovalProps) {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className="bg-yellow-100 text-yellow-800 border-yellow-200"
                     >
                       {request.leaveType} Leave

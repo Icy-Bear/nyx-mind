@@ -211,9 +211,9 @@ export async function applyLeave(data: {
   } catch (error) {
     console.error("Error applying for leave:", error);
     if (error instanceof Error) {
-      throw error;
+      return { success: false, error: error.message };
     }
-    throw new Error("Failed to apply for leave");
+    return { success: false, error: "Failed to apply for leave" };
   }
 }
 
@@ -290,9 +290,9 @@ export async function approveLeave(requestId: string) {
   } catch (error) {
     console.error("Error approving leave:", error);
     if (error instanceof Error) {
-      throw error;
+      return { success: false, error: error.message };
     }
-    throw new Error("Failed to approve leave");
+    return { success: false, error: "Failed to approve leave" };
   }
 }
 
@@ -324,9 +324,9 @@ export async function rejectLeave(requestId: string) {
   } catch (error) {
     console.error("Error rejecting leave:", error);
     if (error instanceof Error) {
-      throw error;
+      return { success: false, error: error.message };
     }
-    throw new Error("Failed to reject leave");
+    return { success: false, error: "Failed to reject leave" };
   }
 }
 

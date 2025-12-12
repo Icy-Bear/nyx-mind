@@ -73,7 +73,7 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
   const [open, setOpen] = React.useState<boolean>(false);
   const [isPending, setIsPending] = React.useState<boolean>(false);
   const [users, setUsers] = React.useState<Array<{ id: string; name: string; email: string; role: string | null }>>([]);
-  
+
   const { data: session } = useSession();
 
   const form = useForm<ApplyLeave>({
@@ -107,7 +107,7 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
   async function onSubmit(values: ApplyLeave) {
     try {
       setIsPending(true);
-      await applyLeave({
+      const result = await applyLeave({
         userId: values.userId !== session?.user.id ? values.userId : undefined, // Only send userId if it's different from current user
         leaveType: values.leaveType,
         fromDate: new Date(values.fromDate),
@@ -115,9 +115,14 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
         reason: values.reason,
       });
 
+      if (!result.success) {
+        toast.error(result.error || "Failed to submit leave application");
+        return;
+      }
+
       const isForOtherUser = values.userId && values.userId !== session?.user.id;
       toast.success(
-        isForOtherUser 
+        isForOtherUser
           ? "Leave application submitted successfully for " + users.find(u => u.id === values.userId)?.name
           : "Leave application submitted successfully"
       );
@@ -125,16 +130,12 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Failed to submit leave application");
-      }
+      console.error("Unexpected error:", err);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsPending(false);
     }
   }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -150,7 +151,7 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:w-full">
         <DialogTitle>Apply for Leave</DialogTitle>
         <DialogDescription>
-          {session?.user.role === "admin" 
+          {session?.user.role === "admin"
             ? "Apply leave for yourself or on behalf of other users."
             : "Submit your leave request for review by your manager."
           }
@@ -334,7 +335,7 @@ export function ApplyLeaveDialog({ onSuccess }: ApplyLeaveDialogProps) {
           </form>
         </Form>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }
 
