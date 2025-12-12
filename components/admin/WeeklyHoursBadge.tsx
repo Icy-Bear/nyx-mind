@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -86,7 +87,7 @@ export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBad
   if (loading) {
     return (
       <Badge variant="outline" className={`text-xs ${className}`}>
-        <Clock className="h-3 w-3 mr-1 animate-spin" />
+        <Spinner className="h-3 w-3 mr-1" />
         Loading...
       </Badge>
     );

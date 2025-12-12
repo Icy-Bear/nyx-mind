@@ -55,7 +55,7 @@ export function TargetHoursProgress({
     try {
       setIsSettingTarget(true);
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-      
+
       await setTargetHours({
         userId: member.id,
         weekStartDate: weekStart,
@@ -90,7 +90,7 @@ export function TargetHoursProgress({
               {targetHours}h
             </Badge>
           </div>
-          
+
           {isCurrentUserAdmin && (
             <Button
               variant="ghost"
@@ -124,16 +124,16 @@ export function TargetHoursProgress({
               </span>
             </div>
           </div>
-          
-          <Progress 
-            value={progressPercentage} 
+
+          <Progress
+            value={progressPercentage}
             className="h-3"
           />
-          
+
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Status</span>
             <span>
-              {isOverTarget 
+              {isOverTarget
                 ? `${(actualHours - targetHours).toFixed(1)}h over target`
                 : `${remainingHours.toFixed(1)}h remaining`
               }
@@ -144,7 +144,7 @@ export function TargetHoursProgress({
 
       {/* Set Target Hours Dialog */}
       <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Set Target Hours</DialogTitle>
             <DialogDescription>

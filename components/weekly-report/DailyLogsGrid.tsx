@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Clock } from "lucide-react";
 import { DailyLogCard } from "./DailyLogCard";
 import { isDateInAnyRange, DateRange } from "@/lib/project-date-utils";
@@ -80,34 +80,48 @@ export function DailyLogsGrid({
       </CardHeader>
 
       <CardContent className="pt-0">
-        {isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <Spinner />
-          </div>
-        )}
         <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {DAYS.map((day, index) => {
-            const dayDate = weekDates[index];
-            
-            return (
-              <DailyLogCard
-                key={day.key}
-                day={day}
-                date={dayDate}
-                hours={hours[day.key] || 0}
-                project={projects[day.key] || "none"}
-                description={descriptions[day.key] || ""}
-                isDateValid={
-                  projectDateRanges.length > 0
-                    ? isDateInAnyRange(dayDate, projectDateRanges)
-                    : true
-                }
-                onClick={() => handleDayClick(day.key, dayDate)}
-                userProjects={userProjects}
-                isLoading={isLoading}
-              />
-            );
-          })}
+          {isLoading
+            ? // Loading Skeletons
+            Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="rounded-xl border bg-card text-card-foreground shadow p-4 space-y-3"
+              >
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </div>
+            ))
+            : // Actual Data
+            DAYS.map((day, index) => {
+              const dayDate = weekDates[index];
+
+              return (
+                <DailyLogCard
+                  key={day.key}
+                  day={day}
+                  date={dayDate}
+                  hours={hours[day.key] || 0}
+                  project={projects[day.key] || "none"}
+                  description={descriptions[day.key] || ""}
+                  isDateValid={
+                    projectDateRanges.length > 0
+                      ? isDateInAnyRange(dayDate, projectDateRanges)
+                      : true
+                  }
+                  onClick={() => handleDayClick(day.key, dayDate)}
+                  userProjects={userProjects}
+                  isLoading={isLoading}
+                />
+              );
+            })}
         </div>
       </CardContent>
     </Card>

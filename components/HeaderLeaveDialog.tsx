@@ -79,7 +79,7 @@ interface HeaderLeaveDialogProps {
 export function HeaderLeaveDialog({ onSuccess }: HeaderLeaveDialogProps) {
   const [isPending, setIsPending] = React.useState<boolean>(false);
   const [users, setUsers] = React.useState<Array<{ id: string; name: string; email: string; role: string | null }>>([]);
-  
+
   const { data: session } = useSession();
 
   const form = ReactHookForm.useForm<ApplyLeave>({
@@ -123,7 +123,7 @@ export function HeaderLeaveDialog({ onSuccess }: HeaderLeaveDialogProps) {
 
       const isForOtherUser = values.userId && values.userId !== session?.user.id;
       toast.success(
-        isForOtherUser 
+        isForOtherUser
           ? "Leave application submitted successfully for " + users.find(u => u.id === values.userId)?.name
           : "Leave application submitted successfully"
       );
@@ -148,10 +148,10 @@ export function HeaderLeaveDialog({ onSuccess }: HeaderLeaveDialogProps) {
           <span>Apply Leave</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogTitle>Apply for Leave</DialogTitle>
         <DialogDescription>
-          {session?.user.role === "admin" 
+          {session?.user.role === "admin"
             ? "Apply leave for yourself or on behalf of other users."
             : "Submit your leave request for review by your manager."
           }

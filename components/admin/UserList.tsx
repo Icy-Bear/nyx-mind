@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+
+
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+
 import {
   MoreHorizontal,
   Search,
@@ -66,6 +62,23 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     joinedAt: Date;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [dateInputValue, setDateInputValue] = useState("");
+
+  useEffect(() => {
+    if (editUser?.joinedAt) {
+      setDateInputValue(format(editUser.joinedAt, "yyyy-MM-dd"));
+    }
+  }, [editUser?.joinedAt]);
+
+  const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDateInputValue(value);
+
+    const parsedDate = new Date(value);
+    if (!isNaN(parsedDate.getTime()) && editUser) {
+      setEditUser({ ...editUser, joinedAt: parsedDate });
+    }
+  };
 
   // Memoize users to prevent infinite re-renders
   const memoizedUsers = useMemo(() => users, [users]);
@@ -113,8 +126,8 @@ export default function UserList({ users, currentUserId }: UserListProps) {
     try {
       setIsUpdating(true);
       await updateUserJoinedAt(editUser.user.id, editUser.joinedAt);
-       toast.success("User joined date updated successfully");
-       setEditUser(null);
+      toast.success("User joined date updated successfully");
+      setEditUser(null);
     } catch {
       toast.error("Failed to update user joined date");
     } finally {
@@ -197,82 +210,161 @@ export default function UserList({ users, currentUserId }: UserListProps) {
 
       {/* User Grid/List */}
       {viewMode === "grid" ? (
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-           {sortedUsers.map((user) => (
-             <Card
-               key={user.id}
-               className={`hover:shadow-md transition-shadow ${
-                 user.id === currentUserId ? "ring-2 ring-primary" : ""
-               }`}
-             >
-               <CardContent className="p-3 sm:p-4 lg:p-6">
-                 <div className="flex items-start justify-between mb-3 sm:mb-4">
-                   <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                     <Avatar className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 flex-shrink-0">
-                       <AvatarImage
-                         src={user.image ?? undefined}
-                         alt={user.name}
-                       />
-                       <AvatarFallback className="text-sm sm:text-base lg:text-lg">
-                         {user.name.charAt(0).toUpperCase()}
-                       </AvatarFallback>
-                     </Avatar>
-                     <div className="min-w-0 flex-1">
-                       <h3 className="font-semibold text-sm sm:text-base lg:text-lg truncate flex gap-2 items-center">
-                         {user.name}
-                         {user.id === currentUserId && (
-                           <Badge
-                             variant="outline"
-                             className="text-xs border-primary text-primary flex-shrink-0"
-                           >
-                             You
-                           </Badge>
-                         )}
-                       </h3>
-                       <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                         {user.email}
-                       </p>
-                     </div>
-                   </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {sortedUsers.map((user) => (
+            <Card
+              key={user.id}
+              className={`hover:shadow-md transition-shadow ${user.id === currentUserId ? "ring-2 ring-primary" : ""
+                }`}
+            >
+              <CardContent className="p-3 sm:p-4 lg:p-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 flex-shrink-0">
+                      <AvatarImage
+                        src={user.image ?? undefined}
+                        alt={user.name}
+                      />
+                      <AvatarFallback className="text-sm sm:text-base lg:text-lg">
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm sm:text-base lg:text-lg truncate flex gap-2 items-center">
+                        {user.name}
+                        {user.id === currentUserId && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-primary text-primary flex-shrink-0"
+                          >
+                            You
+                          </Badge>
+                        )}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                       <DropdownMenuContent align="end">
-                         <DropdownMenuItem
-                           onClick={() =>
-                             setEditUser({
-                               user,
-                               joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
-                             })
-                           }
-                         >
-                           <Edit className="h-4 w-4 mr-2" />
-                           Edit Joined Date
-                         </DropdownMenuItem>
-                         <DropdownMenuItem
-                           onClick={() =>
-                             setDeleteConfirm({
-                               userId: user.id,
-                               userName: user.name,
-                             })
-                           }
-                           className="text-red-600"
-                         >
-                           <Trash2 className="h-4 w-4 mr-2" />
-                           Delete User
-                         </DropdownMenuItem>
-                       </DropdownMenuContent>
-                    </DropdownMenu>
-                 </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setEditUser({
+                            user,
+                            joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+                          })
+                        }
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Joined Date
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setDeleteConfirm({
+                            userId: user.id,
+                            userName: user.name,
+                          })
+                        }
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete User
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      <Shield className="h-3 w-3 mr-1" />
+                      {user.role}
+                    </Badge>
+                    {user.emailVerified ? (
+                      <Badge
+                        variant="outline"
+                        className="text-xs border-green-200 text-green-700"
+                      >
+                        <Mail className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Unverified
+                      </Badge>
+                    )}
+                  </div>
+
+                  {user.createdAt && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">
+                        Joined {new Date(user.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+
+
+
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {sortedUsers.map((user) => (
+            <Card
+              key={user.id}
+              className={`hover:shadow-md transition-shadow ${user.id === currentUserId ? "ring-2 ring-primary" : ""
+                }`}
+            >
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+                      <AvatarImage
+                        src={user.image ?? undefined}
+                        alt={user.name}
+                      />
+                      <AvatarFallback className="text-sm">
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col gap-1">
+                        <h3 className="font-semibold text-sm sm:text-base truncate flex items-center gap-2">
+                          {user.name}
+                          {user.id === currentUserId && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-primary text-primary flex-shrink-0"
+                            >
+                              You
+                            </Badge>
+                          )}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-2">
                         <Badge
-                          variant={user.role === "admin" ? "default" : "secondary"}
+                          variant={
+                            user.role === "admin" ? "default" : "secondary"
+                          }
                           className="text-xs"
                         >
                           <Shield className="h-3 w-3 mr-1" />
@@ -292,156 +384,75 @@ export default function UserList({ users, currentUserId }: UserListProps) {
                             Unverified
                           </Badge>
                         )}
-                       </div>
-
-                   {user.createdAt && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">
-                          Joined {new Date(user.createdAt).toLocaleDateString()}
-                        </span>
+                        {user.createdAt && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
-                   )}
-
-
-
-
-                 </div>
-               </CardContent>
-             </Card>
-           ))}
-         </div>
-       ) : (
-         <div className="space-y-2">
-           {sortedUsers.map((user) => (
-             <Card
-               key={user.id}
-               className={`hover:shadow-md transition-shadow ${
-                 user.id === currentUserId ? "ring-2 ring-primary" : ""
-               }`}
-             >
-               <CardContent className="p-3 sm:p-4">
-                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                   <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                     <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
-                       <AvatarImage
-                         src={user.image ?? undefined}
-                         alt={user.name}
-                       />
-                       <AvatarFallback className="text-sm">
-                         {user.name.charAt(0).toUpperCase()}
-                       </AvatarFallback>
-                     </Avatar>
-                     <div className="flex-1 min-w-0">
-                       <div className="flex flex-col gap-1">
-                         <h3 className="font-semibold text-sm sm:text-base truncate flex items-center gap-2">
-                           {user.name}
-                           {user.id === currentUserId && (
-                             <Badge
-                               variant="outline"
-                               className="text-xs border-primary text-primary flex-shrink-0"
-                             >
-                               You
-                             </Badge>
-                           )}
-                         </h3>
-                         <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                           {user.email}
-                         </p>
-                       </div>
-                       <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-2">
-                         <Badge
-                           variant={
-                             user.role === "admin" ? "default" : "secondary"
-                           }
-                           className="text-xs"
-                         >
-                           <Shield className="h-3 w-3 mr-1" />
-                           {user.role}
-                         </Badge>
-                         {user.emailVerified ? (
-                           <Badge
-                             variant="outline"
-                             className="text-xs border-green-200 text-green-700"
-                           >
-                             <Mail className="h-3 w-3 mr-1" />
-                             Verified
-                           </Badge>
-                         ) : (
-                           <Badge variant="outline" className="text-xs">
-                             <Mail className="h-3 w-3 mr-1" />
-                             Unverified
-                           </Badge>
-                         )}
-{user.createdAt && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
-                              <Calendar className="h-3 w-3 flex-shrink-0" />
-                              {new Date(user.createdAt).toLocaleDateString()}
-                            </span>
-                           )}
-                         </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 flex-shrink-0">
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         className="hidden sm:flex text-xs px-2 py-1 h-8"
-                         onClick={() =>
-                           setEditUser({
-                             user,
-                             joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
-                           })
-                         }
-                       >
-                         <Edit className="h-3 w-3 mr-1" />
-                         Edit
-                       </Button>
-                      <DropdownMenu>
-                       <DropdownMenuTrigger asChild>
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           className="h-8 w-8 p-0"
-                         >
-                           <MoreHorizontal className="h-4 w-4" />
-                         </Button>
-                       </DropdownMenuTrigger>
-                       <DropdownMenuContent align="end">
-                         <DropdownMenuItem
-                           onClick={() =>
-                             setEditUser({
-                               user,
-                               joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
-                             })
-                           }
-                         >
-                           <Edit className="h-4 w-4 mr-2" />
-                           Edit Joined Date
-                         </DropdownMenuItem>
-
-                         <DropdownMenuItem
-                           onClick={() =>
-                             setDeleteConfirm({
-                               userId: user.id,
-                               userName: user.name,
-                             })
-                           }
-                           className="text-red-600"
-                         >
-                           <Trash2 className="h-4 w-4 mr-2" />
-                           Delete User
-                         </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-       )}
+
+                  <div className="flex items-center justify-end gap-2 flex-shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hidden sm:flex text-xs px-2 py-1 h-8"
+                      onClick={() =>
+                        setEditUser({
+                          user,
+                          joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+                        })
+                      }
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setEditUser({
+                              user,
+                              joinedAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+                            })
+                          }
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Joined Date
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setDeleteConfirm({
+                              userId: user.id,
+                              userName: user.name,
+                            })
+                          }
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Empty State */}
       {sortedUsers.length === 0 && (
@@ -475,7 +486,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
         open={!!editUser}
         onOpenChange={() => setEditUser(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit User Joined Date</DialogTitle>
             <DialogDescription>
@@ -485,31 +496,12 @@ export default function UserList({ users, currentUserId }: UserListProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Joined Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !editUser?.joinedAt && "text-muted-foreground"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {editUser?.joinedAt ? format(editUser.joinedAt, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={editUser?.joinedAt}
-                    onSelect={(date) => {
-                      if (date && editUser) {
-                        setEditUser({ ...editUser, joinedAt: date });
-                      }
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={dateInputValue}
+                onChange={handleDateInputChange}
+                className="w-full"
+              />
             </div>
           </div>
           <DialogFooter>
@@ -535,7 +527,7 @@ export default function UserList({ users, currentUserId }: UserListProps) {
         open={!!deleteConfirm}
         onOpenChange={() => setDeleteConfirm(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>

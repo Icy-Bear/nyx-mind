@@ -72,7 +72,7 @@ export function StatusEdit({ projectId, currentStatus, onStatusUpdated }: Status
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Project Status</DialogTitle>
           <DialogDescription>
@@ -92,7 +92,7 @@ export function StatusEdit({ projectId, currentStatus, onStatusUpdated }: Status
               </Badge>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <label className="text-sm font-medium">New Status</label>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
@@ -109,7 +109,7 @@ export function StatusEdit({ projectId, currentStatus, onStatusUpdated }: Status
             </Select>
           </div>
         </div>
-        
+
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isUpdating}>
             Cancel
