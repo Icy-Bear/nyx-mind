@@ -167,6 +167,7 @@ export function WeeklyReportSheet({
               selectedDate={selectedDate}
               isCurrentUserAdmin={isAdmin}
               onTargetHoursUpdated={refreshData}
+              projectId={currentProjectId}
             />
 
             {/* WEEK NAVIGATION */}
@@ -205,11 +206,11 @@ export function WeeklyReportSheet({
           day={
             editingDay
               ? {
-                  key: editingDay,
-                  label: editingDay.charAt(0).toUpperCase() + editingDay.slice(1),
-                  fullLabel:
-                    editingDay.charAt(0).toUpperCase() + editingDay.slice(1) + "day",
-                }
+                key: editingDay,
+                label: editingDay.charAt(0).toUpperCase() + editingDay.slice(1),
+                fullLabel:
+                  editingDay.charAt(0).toUpperCase() + editingDay.slice(1) + "day",
+              }
               : null
           }
           hours={editingDay ? hours[editingDay] : 0}

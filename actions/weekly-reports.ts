@@ -5,6 +5,7 @@ import {
   weeklyReports,
   dailyTimeEntries,
 } from "@/db/schema/weekly-report-schema";
+import { projects } from "@/db/schema/project-schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -26,6 +27,7 @@ export async function saveWeeklyReport(data: {
   hours: Record<string, number>;
   projects: Record<string, string>;
   descriptions: Record<string, string>;
+  projectId?: string;
 }) {
   try {
     const session = await auth.api.getSession({
@@ -48,7 +50,8 @@ export async function saveWeeklyReport(data: {
           eq(
             weeklyReports.weekStartDate,
             data.weekStartDate.toISOString().split("T")[0]
-          )
+          ),
+          data.projectId ? eq(weeklyReports.projectId, data.projectId) : sql`${weeklyReports.projectId} IS NULL`
         )
       )
       .limit(1);
@@ -69,6 +72,7 @@ export async function saveWeeklyReport(data: {
         .values({
           userId,
           weekStartDate: data.weekStartDate.toISOString().split("T")[0],
+          projectId: data.projectId,
         })
         .returning({ id: weeklyReports.id });
 
@@ -134,7 +138,8 @@ export async function getWeeklyReport(weekStartDate: Date, userId?: string, curr
           eq(
             weeklyReports.weekStartDate,
             weekStartDate.toISOString().split("T")[0]
-          )
+          ),
+          currentProjectId ? eq(weeklyReports.projectId, currentProjectId) : sql`${weeklyReports.projectId} IS NULL`
         )
       )
       .limit(1);
@@ -233,7 +238,8 @@ export async function saveDailyEntry(data: {
           eq(
             weeklyReports.weekStartDate,
             data.weekStartDate.toISOString().split("T")[0]
-          )
+          ),
+          data.currentProjectId ? eq(weeklyReports.projectId, data.currentProjectId) : sql`${weeklyReports.projectId} IS NULL`
         )
       )
       .limit(1);
@@ -247,6 +253,7 @@ export async function saveDailyEntry(data: {
         .values({
           userId,
           weekStartDate: data.weekStartDate.toISOString().split("T")[0],
+          projectId: data.currentProjectId,
         })
         .returning({ id: weeklyReports.id });
 
@@ -309,6 +316,8 @@ export async function getUserWeeklyReports(userId?: string, limit = 10) {
         weekStartDate: weeklyReports.weekStartDate,
         createdAt: weeklyReports.createdAt,
         updatedAt: weeklyReports.updatedAt,
+        projectId: weeklyReports.projectId,
+        projectName: projects.projectName,
         totalHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
         entryCount: sql<number>`COUNT(${dailyTimeEntries.id})`,
       })
@@ -317,8 +326,12 @@ export async function getUserWeeklyReports(userId?: string, limit = 10) {
         dailyTimeEntries,
         eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
       )
+      .leftJoin(
+        projects,
+        eq(weeklyReports.projectId, projects.id)
+      )
       .where(eq(weeklyReports.userId, currentUserId))
-      .groupBy(weeklyReports.id)
+      .groupBy(weeklyReports.id, projects.projectName)
       .orderBy(desc(weeklyReports.weekStartDate))
       .limit(limit);
 
@@ -393,6 +406,7 @@ export async function setTargetHours(data: {
   userId: string;
   weekStartDate: Date;
   targetHours: number;
+  projectId?: string;
 }) {
   try {
     const session = await auth.api.getSession({
@@ -418,7 +432,8 @@ export async function setTargetHours(data: {
           eq(
             weeklyReports.weekStartDate,
             data.weekStartDate.toISOString().split("T")[0]
-          )
+          ),
+          data.projectId ? eq(weeklyReports.projectId, data.projectId) : sql`${weeklyReports.projectId} IS NULL`
         )
       )
       .limit(1);
@@ -438,6 +453,7 @@ export async function setTargetHours(data: {
         userId: data.userId,
         weekStartDate: data.weekStartDate.toISOString().split("T")[0],
         targetHours: data.targetHours.toFixed(2),
+        projectId: data.projectId,
       });
     }
 
@@ -454,7 +470,7 @@ export async function setTargetHours(data: {
   }
 }
 
-export async function getUserTargetHours(userId: string, weekStartDate?: Date) {
+export async function getUserTargetHours(userId: string, weekStartDate?: Date, projectId?: string) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -478,6 +494,12 @@ export async function getUserTargetHours(userId: string, weekStartDate?: Date) {
           weekStartDate.toISOString().split("T")[0]
         )
       );
+    }
+
+    if (projectId) {
+      whereConditions.push(eq(weeklyReports.projectId, projectId));
+    } else {
+      whereConditions.push(sql`${weeklyReports.projectId} IS NULL`);
     }
 
     const results = await db
@@ -505,7 +527,7 @@ export async function getUserTargetHours(userId: string, weekStartDate?: Date) {
   }
 }
 
-export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date) {
+export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date, projectId?: string) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -527,37 +549,40 @@ export async function getUserWeeklyProgress(userId: string, weekStartDate?: Date
     const targetReport = await db
       .select({
         targetHours: weeklyReports.targetHours,
+        id: weeklyReports.id,
       })
       .from(weeklyReports)
       .where(
         and(
           eq(weeklyReports.userId, userId),
-          eq(weeklyReports.weekStartDate, weekStartStr)
+          eq(weeklyReports.weekStartDate, weekStartStr),
+          projectId ? eq(weeklyReports.projectId, projectId) : sql`${weeklyReports.projectId} IS NULL`
         )
       )
       .limit(1);
 
     const targetHours = targetReport.length > 0 ? parseFloat(targetReport[0].targetHours) : 40;
+    const reportId = targetReport.length > 0 ? targetReport[0].id : null;
 
     // Get actual hours worked for the week
-    const actualHoursResult = await db
-      .select({
-        totalHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
-      })
-      .from(weeklyReports)
-      .leftJoin(
-        dailyTimeEntries,
-        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
-      )
-      .where(
-        and(
-          eq(weeklyReports.userId, userId),
-          eq(weeklyReports.weekStartDate, weekStartStr)
-        )
-      )
-      .limit(1);
+    let actualHours = 0;
 
-    const actualHours = Number(actualHoursResult[0]?.totalHours || 0);
+    if (reportId) {
+      const actualHoursResult = await db
+        .select({
+          totalHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
+        })
+        .from(dailyTimeEntries)
+        .where(eq(dailyTimeEntries.weeklyReportId, reportId))
+        .limit(1);
+
+      actualHours = Number(actualHoursResult[0]?.totalHours || 0);
+    } else if (!projectId) {
+      // Fallback for legacy data or cross-project view if we want to support it later, 
+      // but for now we stick to strict isolation.
+      // If no report exists for this project/week, actual hours is 0.
+      actualHours = 0;
+    }
 
     return {
       targetHours,
@@ -597,12 +622,14 @@ export async function getUserTotalHours(userId: string, projectId?: string) {
       .from(weeklyReports)
       .leftJoin(
         dailyTimeEntries,
+        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+      )
+      .where(
         and(
-          eq(weeklyReports.id, dailyTimeEntries.weeklyReportId),
-          projectId ? eq(dailyTimeEntries.projectName, projectId) : undefined
+          eq(weeklyReports.userId, userId),
+          projectId ? eq(weeklyReports.projectId, projectId) : undefined
         )
       )
-      .where(eq(weeklyReports.userId, userId))
       .limit(1);
 
     return Number(totalHoursResult[0]?.totalHours || 0);
@@ -636,17 +663,24 @@ export async function getUserWeeklyBreakdown(userId: string, weeksCount: number 
         weekStartDate: weeklyReports.weekStartDate,
         targetHours: weeklyReports.targetHours,
         actualHours: sql<number>`COALESCE(SUM(CAST(${dailyTimeEntries.hours} AS DECIMAL)), 0)`,
+        projectName: projects.projectName,
       })
       .from(weeklyReports)
       .leftJoin(
         dailyTimeEntries,
+        eq(weeklyReports.id, dailyTimeEntries.weeklyReportId)
+      )
+      .leftJoin(
+        projects,
+        eq(weeklyReports.projectId, projects.id)
+      )
+      .where(
         and(
-          eq(weeklyReports.id, dailyTimeEntries.weeklyReportId),
-          projectId ? eq(dailyTimeEntries.projectName, projectId) : undefined
+          eq(weeklyReports.userId, userId),
+          projectId ? eq(weeklyReports.projectId, projectId) : undefined
         )
       )
-      .where(eq(weeklyReports.userId, userId))
-      .groupBy(weeklyReports.weekStartDate, weeklyReports.targetHours)
+      .groupBy(weeklyReports.weekStartDate, weeklyReports.targetHours, projects.projectName)
       .orderBy(desc(weeklyReports.weekStartDate))
       .limit(weeksCount);
 
@@ -658,6 +692,7 @@ export async function getUserWeeklyBreakdown(userId: string, weeksCount: number 
         targetHours,
         actualHours,
         progressPercentage: targetHours > 0 ? Math.min((actualHours / targetHours) * 100, 100) : 0,
+        projectName: week.projectName,
       };
     });
   } catch (error) {

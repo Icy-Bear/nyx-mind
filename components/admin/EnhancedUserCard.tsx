@@ -28,6 +28,7 @@ interface WeeklyData {
   targetHours: number;
   actualHours: number;
   progressPercentage: number;
+  projectName?: string | null;
 }
 
 interface EnhancedUserCardProps {
@@ -128,9 +129,8 @@ export function EnhancedUserCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-md ${
-        isCurrentUser ? "ring-2 ring-primary" : ""
-      } ${className}`}
+      className={`transition-all duration-200 hover:shadow-md ${isCurrentUser ? "ring-2 ring-primary" : ""
+        } ${className}`}
     >
       <CardContent className="p-4">
         {/* Header Section */}
@@ -279,6 +279,11 @@ export function EnhancedUserCard({
                             Week of{" "}
                             {format(new Date(week.weekStartDate), "MMM dd")}
                           </span>
+                          {week.projectName && (
+                            <Badge variant="outline" className="text-[10px] h-5">
+                              {week.projectName}
+                            </Badge>
+                          )}
                           {week.actualHours >= week.targetHours ? (
                             <TrendingUp className="h-3 w-3 text-green-600" />
                           ) : (

@@ -10,11 +10,15 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
+import { projects } from "./project-schema";
+
 export const weeklyReports = pgTable("weekly_reports", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id")
+    .references(() => projects.id, { onDelete: "cascade" }),
   weekStartDate: date("week_start_date").notNull(),
   targetHours: decimal("target_hours", { precision: 4, scale: 2 })
     .default("40.00")
@@ -25,7 +29,7 @@ export const weeklyReports = pgTable("weekly_reports", {
     .$onUpdate(() => new Date())
     .notNull(),
 }, (table) => ({
-  userWeekUnique: uniqueIndex("weekly_reports_user_week_unique").on(table.userId, table.weekStartDate),
+  userWeekProjectUnique: uniqueIndex("weekly_reports_user_week_project_unique").on(table.userId, table.weekStartDate, table.projectId),
 }));
 
 export const dailyTimeEntries = pgTable("daily_time_entries", {

@@ -17,6 +17,7 @@ interface WeeklyHoursBadgeProps {
   userId: string;
   userName: string;
   className?: string;
+  projectId?: string;
 }
 
 interface WeeklyProgress {
@@ -32,7 +33,7 @@ interface ProjectBreakdown {
   description?: string;
 }
 
-export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBadgeProps) {
+export function WeeklyHoursBadge({ userId, userName, className, projectId }: WeeklyHoursBadgeProps) {
   const [progress, setProgress] = useState<WeeklyProgress | null>(null);
   const [projectBreakdown, setProjectBreakdown] = useState<ProjectBreakdown[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,8 +44,8 @@ export function WeeklyHoursBadge({ userId, userName, className }: WeeklyHoursBad
     try {
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const [progressData, reportData] = await Promise.all([
-        getUserWeeklyProgress(userId, weekStart),
-        getWeeklyReport(weekStart, userId)
+        getUserWeeklyProgress(userId, weekStart, projectId),
+        getWeeklyReport(weekStart, userId, projectId)
       ]);
 
       setProgress(progressData);

@@ -31,6 +31,7 @@ interface TargetHoursProgressProps {
   selectedDate: Date;
   isCurrentUserAdmin: boolean;
   onTargetHoursUpdated?: () => void;
+  projectId?: string;
 }
 
 export function TargetHoursProgress({
@@ -40,6 +41,7 @@ export function TargetHoursProgress({
   selectedDate,
   isCurrentUserAdmin,
   onTargetHoursUpdated,
+  projectId,
 }: TargetHoursProgressProps) {
   const [isSettingTarget, setIsSettingTarget] = useState(false);
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
@@ -60,6 +62,7 @@ export function TargetHoursProgress({
         userId: member.id,
         weekStartDate: weekStart,
         targetHours: parseFloat(newTargetHours) || 40,
+        projectId,
       });
 
       toast.success("Target hours updated successfully");
