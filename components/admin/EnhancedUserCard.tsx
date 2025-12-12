@@ -58,15 +58,16 @@ export function EnhancedUserCard({
   const [totalHours, setTotalHours] = useState<number | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasLoadedWeeklyData, setHasLoadedWeeklyData] = useState(false);
 
   const loadData = useCallback(async () => {
-    if (loading) return;
+    if (loading || hasLoadedWeeklyData) return;
 
     setLoading(true);
     try {
       const [total, weekly] = await Promise.all([
         getUserTotalHours(user.id, projectId),
-        getUserWeeklyBreakdown(user.id, 12, projectId), // Last 12 weeks
+        getUserWeeklyBreakdown(user.id, 12, projectId),
       ]);
 
       setTotalHours(total);
@@ -75,15 +76,16 @@ export function EnhancedUserCard({
       console.error(`Failed to load data for user ${user.id}:`, error);
       toast.error("Failed to load user hours data");
     } finally {
+      setHasLoadedWeeklyData(true);
       setLoading(false);
     }
-  }, [user.id, loading, projectId]);
+  }, [user.id, projectId, loading, hasLoadedWeeklyData]);
 
   useEffect(() => {
-    if (isExpanded && (totalHours === null || weeklyData.length === 0)) {
+    if (isExpanded && !hasLoadedWeeklyData) {
       loadData();
     }
-  }, [isExpanded, totalHours, weeklyData.length, loadData]);
+  }, [isExpanded, hasLoadedWeeklyData, loadData]);
 
   const stats = useMemo(() => {
     if (weeklyData.length === 0) return null;
@@ -126,8 +128,9 @@ export function EnhancedUserCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-md ${isCurrentUser ? "ring-2 ring-primary" : ""
-        } ${className}`}
+      className={`transition-all duration-200 hover:shadow-md ${
+        isCurrentUser ? "ring-2 ring-primary" : ""
+      } ${className}`}
     >
       <CardContent className="p-4">
         {/* Header Section */}
@@ -178,7 +181,7 @@ export function EnhancedUserCard({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Expand Button */}
         {canViewDetails && (
           <div className="flex">
             <Button
@@ -221,11 +224,7 @@ export function EnhancedUserCard({
                       Total Hours
                     </div>
                     <div className="text-lg font-bold">
-                      {loading ? (
-                        <div className="animate-pulse bg-muted rounded h-6 w-16"></div>
-                      ) : (
-                        totalHours?.toFixed(1) || "0.0"
-                      )}
+                      {totalHours?.toFixed(1) || "0.0"}
                     </div>
                   </div>
 
@@ -235,14 +234,11 @@ export function EnhancedUserCard({
                       Avg/Week
                     </div>
                     <div className="text-lg font-bold">
-                      {loading ? (
-                        <div className="animate-pulse bg-muted rounded h-6 w-16"></div>
-                      ) : (
-                        stats?.avgWeekly.toFixed(1) || "0.0"
-                      )}
+                      {stats?.avgWeekly.toFixed(1) || "0.0"}
                     </div>
                   </div>
                 </div>
+
                 {/* Summary Stats */}
                 {stats && (
                   <div className="grid grid-cols-3 gap-2 text-center">
@@ -273,7 +269,7 @@ export function EnhancedUserCard({
                   </div>
                 )}
 
-                {/* Weekly Progress List */}
+                {/* Weekly List */}
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {weeklyData.map((week) => (
                     <div key={week.weekStartDate} className="space-y-2">
@@ -303,6 +299,7 @@ export function EnhancedUserCard({
                           </Badge>
                         </div>
                       </div>
+
                       <div className="relative">
                         <Progress
                           value={Math.min(week.progressPercentage, 100)}
